@@ -91,7 +91,7 @@ subprojects {
     dependencies {
         compileOnly("org.jetbrains:annotations:24.0.1")
 
-        testImplementation("org.mockito:mockito-core:5.2.0")
+        testImplementation("org.mockito:mockito-core:5.3.0")
         testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     }
 
