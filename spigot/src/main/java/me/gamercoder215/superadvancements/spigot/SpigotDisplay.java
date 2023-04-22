@@ -48,4 +48,9 @@ public final class SpigotDisplay extends ADisplay {
     public void setDescription(@Nullable BaseComponent description) {
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        return getTitle().toPlainText() + " - " + getDescription().toPlainText();
+    }
 }

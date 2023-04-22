@@ -108,4 +108,6 @@ public abstract class ADisplay {
     public void setY(float y) {
         this.y = y;
     }
+
+    public abstract String toString();
 }

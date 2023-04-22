@@ -49,4 +49,8 @@ public final class PaperDisplay extends ADisplay {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return getTitle() + " - " + getDescription();
+    }
 }

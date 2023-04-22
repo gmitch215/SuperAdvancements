@@ -48,4 +48,8 @@ public final class BukkitDisplay extends ADisplay {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return getTitle() + " - " + getDescription();
+    }
 }
