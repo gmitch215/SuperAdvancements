@@ -79,7 +79,7 @@ allprojects {
     }
 }
 
-val jvmVersion = JavaVersion.VERSION_1_8
+val jvmVersion = JavaVersion.VERSION_11
 
 subprojects {
     apply<JavaPlugin>()

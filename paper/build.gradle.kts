@@ -2,7 +2,12 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
     api(project(":superadvancements-spigot"))
-    compileOnly("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT")
+
+    compileOnly("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT") {
+        version {
+            strictly("1.12.2-R0.1-SNAPSHOT")
+        }
+    }
     compileOnly("net.kyori:adventure-api:4.13.0")
 
     listOf(
