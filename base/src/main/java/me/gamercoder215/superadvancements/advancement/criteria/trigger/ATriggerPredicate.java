@@ -6,9 +6,12 @@ import me.gamercoder215.superadvancements.util.Range;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.*;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,16 +19,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Represents a set of predicates for a {@link ATrigger} trigger.
+ * Represents a predicate for a {@link ATrigger} trigger.
+ * @param <T> Predicate Class
  */
-public final class ATriggerPredicate {
+public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
 
-    private ATriggerPredicate() {}
+    String toString();
+
+    int hashCode();
+
+    boolean equals(Object obj);
+
+    Class<T> getPredicateClass();
 
     /**
      * Represents an Item Predicate.
      */
-    public static final class Item {
+    final class Item implements ATriggerPredicate<Item> {
 
         /**
          * Represents an Item Predicate that matches any item.
@@ -88,6 +98,33 @@ public final class ATriggerPredicate {
             return ImmutableSet.copyOf(storedEnchantments);
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Item item = (Item) o;
+            return Objects.equals(includes, item.includes) && Objects.equals(count, item.count) && Objects.equals(durability, item.durability) && Objects.equals(enchantments, item.enchantments) && Objects.equals(storedEnchantments, item.storedEnchantments);
+        }
+
+        @Override
+        public Class<Item> getPredicateClass() { return Item.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(includes, count, durability, enchantments, storedEnchantments);
+        }
+
+        @Override
+        public String toString() {
+            return "Item{" +
+                    "includes=" + includes +
+                    ", count=" + count +
+                    ", durability=" + durability +
+                    ", enchantments=" + enchantments +
+                    ", storedEnchantments=" + storedEnchantments +
+                    '}';
+        }
+
         /**
          * Creates a new Item Predicate Builder.
          * @return Item Predicate Builder
@@ -95,6 +132,38 @@ public final class ATriggerPredicate {
         @NotNull
         public static Builder builder() {
             return new Builder();
+        }
+
+        /**
+         * Constructs an item predicate from an ItemStack item.
+         * @param item ItemStack
+         * @return Item Predicate
+         * @throws IllegalArgumentException If the item is null
+         */
+        @NotNull
+        public static Item of(@NotNull ItemStack item) throws IllegalArgumentException {
+            if (item == null) throw new IllegalArgumentException("Item cannot be null");
+
+            Set<Enchantment> enchantments = ImmutableSet.copyOf(Enchantment.of(item));
+            Set<Enchantment> stored = new HashSet<>();
+
+            if (item.getItemMeta() instanceof EnchantmentStorageMeta) {
+                EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+                stored.addAll(meta.getStoredEnchants()
+                        .entrySet()
+                        .stream()
+                        .map(entry -> new Enchantment(entry.getKey(), Range.exact(entry.getValue())))
+                        .collect(Collectors.toSet())
+                );
+            }
+
+            return new Item(
+                Set.of(item),
+                Range.exact(item.getAmount()),
+                Range.exact(item.getDurability()),
+                enchantments,
+                stored
+            );
         }
 
         /**
@@ -108,6 +177,23 @@ public final class ATriggerPredicate {
             private Range durability = Range.ANY;
             private Set<Enchantment> enchantments = new HashSet<>();
             private Set<Enchantment> storedEnchantments = new HashSet<>();
+
+            /**
+             * Copies an item predicate into this builder.
+             * @param item Item Predicate
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException If the item is null
+             */
+            @NotNull
+            public Builder copy(@NotNull Item item) throws IllegalArgumentException {
+                if (item == null) throw new IllegalArgumentException("Item cannot be null");
+                this.includes.addAll(item.includes);
+                this.count = item.count;
+                this.durability = item.durability;
+                this.enchantments.addAll(item.enchantments);
+                this.storedEnchantments.addAll(item.storedEnchantments);
+                return this;
+            }
 
             /**
              * Adds an item to the included items for this item predicate.
@@ -266,7 +352,7 @@ public final class ATriggerPredicate {
     /**
      * Represents an Enchantment Predicate.
      */
-    public static final class Enchantment {
+    final class Enchantment implements ATriggerPredicate<Enchantment> {
 
         /**
          * Represents an Enchantment Predicate that matches any enchantment.
@@ -299,6 +385,30 @@ public final class ATriggerPredicate {
             return level;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Enchantment that = (Enchantment) o;
+            return Objects.equals(enchantment, that.enchantment) && Objects.equals(level, that.level);
+        }
+
+        @Override
+        public Class<Enchantment> getPredicateClass() { return Enchantment.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(enchantment, level);
+        }
+
+        @Override
+        public String toString() {
+            return "Enchantment{" +
+                    "enchantment=" + enchantment +
+                    ", level=" + level +
+                    '}';
+        }
+
         /**
          * Creates a new Enchantment Predicate Builder.
          * @return Enchantment Predicate Builder
@@ -309,6 +419,34 @@ public final class ATriggerPredicate {
         }
 
         /**
+         * Constructs a list of enchantment predicates from the given item.
+         * @param item ItemStack
+         * @return List of Enchantment Predicates
+         */
+        @NotNull
+        public static List<Enchantment> of(@NotNull ItemStack item) {
+            if (item == null) return Collections.emptyList();
+            return of(item.getItemMeta());
+        }
+
+        /**
+         * Constructs a list of enchantment predicates from the given item meta.
+         * @param meta Item Meta
+         * @return List of Enchantment Predicates
+         */
+        @NotNull
+        public static List<Enchantment> of(@NotNull ItemMeta meta) {
+            if (meta == null) return Collections.emptyList();
+
+            List<Enchantment> enchantments = new ArrayList<>();
+            for (Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry : meta.getEnchants().entrySet()) {
+                enchantments.add(new Enchantment(entry.getKey(), Range.exact(entry.getValue())));
+            }
+
+            return enchantments;
+        }
+
+        /**
          * Represents an Enchantment Predicate Builder.
          */
         public static final class Builder {
@@ -316,6 +454,21 @@ public final class ATriggerPredicate {
 
             private org.bukkit.enchantments.Enchantment enchantment;
             private Range level = Range.ANY;
+
+            /**
+             * Copies the enchantment predicate.
+             * @param enchantment Enchantment Predicate
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException if enchantment is null
+             */
+            @NotNull
+            public Builder copy(@NotNull Enchantment enchantment) throws IllegalArgumentException {
+                if (enchantment == null) throw new IllegalArgumentException("enchantment cannot be null");
+
+                this.enchantment = enchantment.enchantment;
+                this.level = enchantment.level;
+                return this;
+            }
 
             /**
              * Sets the enchantment for this enchantment predicate.
@@ -347,6 +500,11 @@ public final class ATriggerPredicate {
                 return this;
             }
 
+            /**
+             * Builds the Enchantment Predicate.
+             * @return Enchantment Predicate
+             */
+            @NotNull
             public ATriggerPredicate.Enchantment build() {
                 if (level == null) throw new IllegalStateException("Level Range cannot be null");
                 if (enchantment == null) throw new IllegalStateException("Enchantment cannot be null");
@@ -360,7 +518,7 @@ public final class ATriggerPredicate {
     /**
      * Represents a Light Predicate for recording light levels.
      */
-    public static final class Light {
+    final class Light implements ATriggerPredicate<Light> {
 
         /**
          * Represents a light predicate that matches any light level.
@@ -382,13 +540,64 @@ public final class ATriggerPredicate {
             return brightness;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Light light = (Light) o;
+            return Objects.equals(brightness, light.brightness);
+        }
+
+        @Override
+        public Class<Light> getPredicateClass() { return Light.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(brightness);
+        }
+
+        @Override
+        public String toString() {
+            return "Light{" +
+                    "brightness=" + brightness +
+                    '}';
+        }
+
+        /**
+         * Creates a new light predicate builder.
+         * @return Light Predicate Builder
+         */
         public static Builder builder() {
             return new Builder();
         }
 
+        /**
+         * Creates a new light predicate.
+         * @param range Brightness Range
+         * @return Light Predicate
+         */
+        @NotNull
+        public static Light of(@Nullable Range range) {
+            return new Light(range == null ? Range.ANY : range);
+        }
+
+        /**
+         * Represents a Light Predicate Builder.
+         */
         public static final class Builder {
 
             private Range brightness = Range.ANY;
+
+            /**
+             * Copies the light predicate.
+             * @param light Light Predicate
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder copy(@NotNull Light light) {
+                this.brightness = light.brightness;
+                return this;
+            }
 
             /**
              * Sets the brightness range for this light predicate.
@@ -425,7 +634,7 @@ public final class ATriggerPredicate {
     /**
      * Represents a Block Predicate.
      */
-    public static final class Block {
+    final class Block implements ATriggerPredicate<Block> {
 
         /**
          * Represents a block predicate that matches any block.
@@ -447,6 +656,29 @@ public final class ATriggerPredicate {
             return ImmutableSet.copyOf(includes);
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Block block = (Block) o;
+            return Objects.equals(includes, block.includes);
+        }
+
+        @Override
+        public Class<Block> getPredicateClass() { return Block.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(includes);
+        }
+
+        @Override
+        public String toString() {
+            return "Block{" +
+                    "includes=" + includes +
+                    '}';
+        }
+
         /**
          * Creates a new Block Predicate Builder.
          * @return Block Predicate Builder
@@ -454,6 +686,32 @@ public final class ATriggerPredicate {
         @NotNull
         public static Builder builder() {
             return new Builder();
+        }
+
+        /**
+         * Creates a new Block Predicate.
+         * @param materials Array of Materials to match
+         * @return Block Predicate
+         * @throws IllegalArgumentException if the array is null or contains non-blocks
+         */
+        @NotNull
+        public static Block of(@NotNull Material... materials) throws IllegalArgumentException {
+            if (materials == null) throw new IllegalArgumentException("Materials cannot be null");
+            return of(Arrays.asList(materials));
+        }
+
+        /**
+         * Creates a new Block Predicate.
+         * @param materials Iterable of Materials to match
+         * @return Block Predicate
+         * @throws IllegalArgumentException if iterables is null or contains non-blocks
+         */
+        @NotNull
+        public static Block of(@NotNull Iterable<? extends Material> materials) throws IllegalArgumentException {
+            if (materials == null) throw new IllegalArgumentException("Materials cannot be null");
+            materials.forEach(m -> { if (!m.isBlock()) throw new IllegalArgumentException("Material " + m + " is not a block"); });
+
+            return new Block(ImmutableSet.copyOf(materials));
         }
 
         /**
@@ -465,6 +723,20 @@ public final class ATriggerPredicate {
             }
 
             private final Set<Material> includes = new HashSet<>();
+
+            /**
+             * Copies the block predicate.
+             * @param block Block Predicate
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException if the block is null
+             */
+            @NotNull
+            public Builder copy(@NotNull Block block) throws IllegalArgumentException {
+                if (block == null) throw new IllegalArgumentException("Block cannot be null");
+                this.includes.clear();
+                this.includes.addAll(block.includes);
+                return this;
+            }
 
             /**
              * Adds a material to the materials for this block predicate.
@@ -514,7 +786,7 @@ public final class ATriggerPredicate {
     /**
      * Represents a Location Predicate.
      */
-    public static final class Location {
+    final class Location implements ATriggerPredicate<Location> {
 
         /**
          * Represents a Location Predicate that matches any location.
@@ -612,6 +884,36 @@ public final class ATriggerPredicate {
             return blockPredicate;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Location location = (Location) o;
+            return smokey == location.smokey && Objects.equals(xRange, location.xRange) && Objects.equals(yRange, location.yRange) && Objects.equals(zRange, location.zRange) && biome == location.biome && Objects.equals(dimension, location.dimension) && Objects.equals(lightPredicate, location.lightPredicate) && Objects.equals(blockPredicate, location.blockPredicate);
+        }
+
+        @Override
+        public Class<Location> getPredicateClass() { return Location.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(xRange, yRange, zRange, biome, dimension, smokey, lightPredicate, blockPredicate);
+        }
+
+        @Override
+        public String toString() {
+            return "Location{" +
+                    "xRange=" + xRange +
+                    ", yRange=" + yRange +
+                    ", zRange=" + zRange +
+                    ", biome=" + biome +
+                    ", dimension=" + dimension +
+                    ", smokey=" + smokey +
+                    ", lightPredicate=" + lightPredicate +
+                    ", blockPredicate=" + blockPredicate +
+                    '}';
+        }
+
         /**
          * Creates a new Location Predicate Builder.
          * @return Location Predicate Builder
@@ -619,6 +921,24 @@ public final class ATriggerPredicate {
         @NotNull
         public static Builder builder() {
             return new Builder();
+        }
+
+        /**
+         * Creates a new Location Predicate from a Bukkit Location.
+         * @param location Bukkit Location
+         * @return Location Predicate
+         * @throws IllegalArgumentException if location is null
+         */
+        @NotNull
+        public static Location of(@NotNull org.bukkit.Location location) throws IllegalArgumentException {
+            if (location == null) throw new IllegalArgumentException("Location cannot be null");
+
+            return Location.builder()
+                    .x(location.getBlockX())
+                    .y(location.getBlockY())
+                    .z(location.getBlockZ())
+                    .dimension(location.getWorld())
+                    .build();
         }
 
         /**
@@ -636,6 +956,24 @@ public final class ATriggerPredicate {
             private boolean smokey = false;
             private Light lightPredicate = null;
             private Block blockPredicate = null;
+
+            /**
+             * Copies another location predicate.
+             * @param location Location Predicate
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder copy(@NotNull Location location) {
+                this.xRange = location.xRange;
+                this.yRange = location.yRange;
+                this.zRange = location.zRange;
+                this.biome = location.biome;
+                this.dimension = location.dimension;
+                this.smokey = location.smokey;
+                this.lightPredicate = location.lightPredicate;
+                this.blockPredicate = location.blockPredicate;
+                return this;
+            }
 
             /**
              * Sets the X range for this location predicate.
@@ -771,7 +1109,7 @@ public final class ATriggerPredicate {
     /**
      * Represents an Entity Predicate.
      */
-    public static final class Entity {
+    final class Entity implements ATriggerPredicate<Entity> {
 
         /**
          * Represents an Entity Predicate that matches any entity.
@@ -941,6 +1279,41 @@ public final class ATriggerPredicate {
             return target;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Entity entity = (Entity) o;
+            return isOnFire == entity.isOnFire && isCrouching == entity.isCrouching && isSprinting == entity.isSprinting && isSwimming == entity.isSwimming && isBaby == entity.isBaby && Objects.equals(types, entity.types) && Objects.equals(distanceToPlayer, entity.distanceToPlayer) && Objects.equals(location, entity.location) && Objects.equals(steppingLocation, entity.steppingLocation) && Objects.equals(equipment, entity.equipment) && Objects.equals(vehicle, entity.vehicle) && Objects.equals(passenger, entity.passenger) && Objects.equals(target, entity.target);
+        }
+
+        @Override
+        public Class<Entity> getPredicateClass() { return Entity.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(types, distanceToPlayer, location, steppingLocation, isOnFire, isCrouching, isSprinting, isSwimming, isBaby, equipment, vehicle, passenger, target);
+        }
+
+        @Override
+        public String toString() {
+            return "Entity{" +
+                    "types=" + types +
+                    ", distanceToPlayer=" + distanceToPlayer +
+                    ", location=" + location +
+                    ", steppingLocation=" + steppingLocation +
+                    ", isOnFire=" + isOnFire +
+                    ", isCrouching=" + isCrouching +
+                    ", isSprinting=" + isSprinting +
+                    ", isSwimming=" + isSwimming +
+                    ", isBaby=" + isBaby +
+                    ", equipment=" + equipment +
+                    ", vehicle=" + vehicle +
+                    ", passenger=" + passenger +
+                    ", target=" + target +
+                    '}';
+        }
+
         /**
          * Creates a new Entity Predicate Builder.
          * @return Entity Predicate Builder
@@ -948,6 +1321,40 @@ public final class ATriggerPredicate {
         @NotNull
         public static Builder builder() {
             return new Builder();
+        }
+
+        /**
+         * Creates a new Entity Predicate Builder with the provided entity as a base.
+         * @param entity Entity
+         * @return Entity Predicate Builder
+         * @throws IllegalArgumentException if the entity is null
+         */
+        @NotNull
+        public static Entity of(@NotNull org.bukkit.entity.Entity entity) throws IllegalArgumentException {
+            if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
+
+            return new Entity(
+                    Set.of(entity.getType()),
+                    null,
+                    null,
+                    null,
+                    entity.getFireTicks() > 0,
+                    entity instanceof Player && ((Player) entity).isSneaking(),
+                    entity instanceof Player && ((Player) entity).isSprinting(),
+                    entity.getLocation().getBlock().getType() == Material.WATER || entity.getLocation().getBlock().getType() == Material.LAVA,
+                    entity instanceof Ageable && !((Ageable) entity).isAdult(),
+                    entity instanceof LivingEntity ? null : Map.of(
+                            EquipmentSlot.HAND, Item.of(((LivingEntity) entity).getEquipment().getItemInMainHand()),
+                            EquipmentSlot.OFF_HAND, Item.of(((LivingEntity) entity).getEquipment().getItemInOffHand()),
+                            EquipmentSlot.HEAD, Item.of(((LivingEntity) entity).getEquipment().getHelmet()),
+                            EquipmentSlot.CHEST, Item.of(((LivingEntity) entity).getEquipment().getChestplate()),
+                            EquipmentSlot.LEGS, Item.of(((LivingEntity) entity).getEquipment().getLeggings()),
+                            EquipmentSlot.FEET, Item.of(((LivingEntity) entity).getEquipment().getBoots())
+                    ),
+                    null,
+                    null,
+                    null
+            );
         }
 
         /**
@@ -973,6 +1380,37 @@ public final class ATriggerPredicate {
             private Entity vehicle = Entity.ANY;
             private Entity passenger = Entity.ANY;
             private Entity target = Entity.ANY;
+
+            /**
+             * Copies the provided entity into this builder.
+             * @param entity Entity Predicate
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException if the entity is null
+             */
+            @NotNull
+            public Builder copy(@NotNull Entity entity) throws IllegalArgumentException {
+                if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
+
+                this.types.clear();
+                this.types.addAll(entity.getTypes());
+
+                this.distanceToPlayer = entity.distanceToPlayer;
+                this.location = entity.location;
+                this.steppingLocation = entity.steppingLocation;
+                this.isOnFire = entity.isOnFire;
+                this.isCrouching = entity.isCrouching;
+                this.isSprinting = entity.isSprinting;
+                this.isSwimming = entity.isSwimming;
+                this.isBaby = entity.isBaby;
+
+                this.equipment.clear();
+                this.equipment.putAll(entity.equipment);
+
+                this.vehicle = entity.vehicle;
+                this.passenger = entity.passenger;
+                this.target = entity.target;
+                return this;
+            }
 
             /**
              * Adds an entity type to this entity predicate builder.
@@ -1173,6 +1611,222 @@ public final class ATriggerPredicate {
                         this.target
                 );
             }
+        }
+    }
+
+    /**
+     * Represents a Damage Predicate.
+     */
+    final class Damage implements ATriggerPredicate<Damage> {
+
+        private final Range dealt;
+        private final Range taken;
+        private final Entity source;
+        private final boolean blocked;
+        private final EntityDamageEvent.DamageCause cause;
+
+        private Damage(Range dealt, Range taken, Entity source, boolean blocked, EntityDamageEvent.DamageCause cause) {
+            this.dealt = dealt;
+            this.taken = taken;
+            this.source = source;
+            this.blocked = blocked;
+            this.cause = cause;
+        }
+
+        /**
+         * Fetches the dealt damage range of this damage predicate.
+         * @return Dealt Damage Range
+         */
+        @NotNull
+        public Range getDealtRange() {
+            return dealt;
+        }
+
+        /**
+         * Fetches the taken damage range of this damage predicate.
+         * @return Taken Damage Range
+         */
+        @NotNull
+        public Range getTakenRange() {
+            return taken;
+        }
+
+        /**
+         * Fetches the entity predicate for the source entity of this damage predicate.
+         * @return Source Entity Predicate
+         */
+        @NotNull
+        public Entity getSourcePredicate() {
+            return source;
+        }
+
+        /**
+         * Checks whether this damage predicate matches damage that was blocked.
+         * @return true if damage was blocked, false otherwise
+         */
+        public boolean wasBlocked() {
+            return blocked;
+        }
+
+        /**
+         * Fetches the damage cause of this damage predicate.
+         * @return Damage Cause
+         */
+        @NotNull
+        public EntityDamageEvent.DamageCause getCause() {
+            return cause;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Damage damage = (Damage) o;
+            return blocked == damage.blocked && Objects.equals(dealt, damage.dealt) && Objects.equals(taken, damage.taken) && Objects.equals(source, damage.source) && cause == damage.cause;
+        }
+
+        @Override
+        public Class<Damage> getPredicateClass() { return Damage.class; }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dealt, taken, source, blocked, cause);
+        }
+
+        @Override
+        public String toString() {
+            return "Damage{" +
+                    "dealt=" + dealt +
+                    ", taken=" + taken +
+                    ", source=" + source +
+                    ", blocked=" + blocked +
+                    ", cause=" + cause +
+                    '}';
+        }
+
+        /**
+         * Creates a new damage predicate builder.
+         * @return Damage Predicate Builder
+         */
+        @NotNull
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        /**
+         * Creates a new damage predicate builder with the given dealt and taken damage ranges.
+         * @param event Entity Damage Event
+         * @return Damage Predicate Builder
+         */
+        @NotNull
+        public static Damage of(@NotNull EntityDamageEvent event) {
+            return builder()
+                    .dealt(Range.exact(event.getDamage()))
+                    .taken(Range.exact(event.getFinalDamage()))
+                    .source(Entity.of(event.getEntity()))
+                    .blocked(event.isCancelled())
+                    .cause(event.getCause())
+                    .build();
+        }
+
+        /**
+         * Represents a Damage Predicate Builder.
+         */
+        public static final class Builder {
+
+            private Range dealt = Range.ANY;
+            private Range taken = Range.ANY;
+            private Entity source = Entity.ANY;
+            private boolean blocked = false;
+            private EntityDamageEvent.DamageCause cause;
+
+            private Builder() {}
+
+            /**
+             * Copies another damage predicate into this damage predicate builder.
+             * @param damage Damage Predicate
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException if damage is null
+             */
+            public Builder copy(@NotNull Damage damage) throws IllegalArgumentException {
+                if (damage == null) throw new IllegalArgumentException("Damage cannot be null");
+                this.dealt = damage.dealt;
+                this.taken = damage.taken;
+                this.source = damage.source;
+                this.blocked = damage.blocked;
+                this.cause = damage.cause;
+                return this;
+            }
+
+            /**
+             * Sets the dealt damage range of this damage predicate builder.
+             * @param dealt Dealt Damage Range
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder dealt(@NotNull Range dealt) {
+                this.dealt = dealt;
+                return this;
+            }
+
+            /**
+             * Sets the taken damage range of this damage predicate builder.
+             * @param taken Taken Damage Range
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder taken(@NotNull Range taken) {
+                this.taken = taken;
+                return this;
+            }
+
+            /**
+             * Sets the source entity predicate of this damage predicate builder.
+             * @param source Source Entity Predicate
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder source(@NotNull Entity source) {
+                this.source = source;
+                return this;
+            }
+
+            /**
+             * Sets whether this damage predicate builder matches damage that was blocked.
+             * @param blocked true if damage was blocked, false otherwise
+             * @return this builder, for chaining
+             */
+            @NotNull
+            public Builder blocked(boolean blocked) {
+                this.blocked = blocked;
+                return this;
+            }
+
+            /**
+             * Sets the damage cause of this damage predicate builder.
+             * @param cause Damage Cause
+             * @return this builder, for chaining
+             * @throws IllegalArgumentException if the damage cause is null
+             */
+            @NotNull
+            public Builder cause(@NotNull EntityDamageEvent.DamageCause cause) throws IllegalArgumentException {
+                if (cause == null) throw new IllegalArgumentException("Damage cause cannot be null!");
+
+                this.cause = cause;
+                return this;
+            }
+
+            /**
+             * Builds the damage predicate from this damage predicate builder.
+             * @return Damage Predicate
+             * @throws IllegalStateException if the damage cause is null
+             */
+            @NotNull
+            public Damage build() throws IllegalStateException {
+                if (cause == null) throw new IllegalStateException("Damage cause cannot be null!");
+                return new Damage(dealt, taken, source, blocked, cause);
+            }
+
         }
     }
 }
