@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.UUID;
 
-@SuppressWarnings({"unchecked", ""})
+@SuppressWarnings({"unchecked", "deprecation"})
 class PaperUtil {
 
     static HoverEvent toSpigot(net.kyori.adventure.text.event.HoverEvent<?> hoverEvent) {
@@ -131,7 +131,7 @@ class PaperUtil {
             paper = Component.text(((TextComponent) component).getText());
         else if (component instanceof TranslatableComponent) {
             TranslatableComponent tComponent = (TranslatableComponent) component;
-            paper = Component.translatable(tComponent.getTranslate(), "", tComponent.getWith().stream().map(PaperUtil::toPaper).toArray(Component[]::new));
+            paper = Component.translatable(tComponent.getTranslate(), "", tComponent.getWith() == null ? new Component[0] : tComponent.getWith().stream().map(PaperUtil::toPaper).toArray(Component[]::new));
         } else if (component instanceof SelectorComponent)
             paper = Component.selector(((SelectorComponent) component).getSelector());
         else if (component instanceof ScoreComponent) {
