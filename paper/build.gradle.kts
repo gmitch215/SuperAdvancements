@@ -10,6 +10,13 @@ dependencies {
     }
     compileOnly("net.kyori:adventure-api:4.13.0")
 
+    testImplementation("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT") {
+        version {
+            strictly("1.12.2-R0.1-SNAPSHOT")
+        }
+    }
+    testImplementation("net.kyori:adventure-api:4.13.0")
+
     listOf(
         "1_12_R1",
         "1_13_R1",

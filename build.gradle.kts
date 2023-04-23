@@ -93,6 +93,7 @@ subprojects {
 
         testImplementation("org.mockito:mockito-core:5.3.0")
         testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+        testImplementation("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
     }
 
     java {
