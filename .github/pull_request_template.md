@@ -21,7 +21,6 @@ Tested on:
 - [ ] JDK Version 17
 - [ ] JDK Version 16
 - [ ] JDK Version 11
-- [ ] JDK Version 1.8
 
 ## Demonstration
 _Screenshots or any other info, if you please._
