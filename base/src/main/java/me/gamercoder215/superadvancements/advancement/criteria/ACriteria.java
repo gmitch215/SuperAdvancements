@@ -3,7 +3,7 @@ package me.gamercoder215.superadvancements.advancement.criteria;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an abstract Criteria object with no type
+ * Represents an abstract Criteria object
  */
 public abstract class ACriteria {
 

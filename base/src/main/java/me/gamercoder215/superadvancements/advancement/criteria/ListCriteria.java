@@ -89,6 +89,7 @@ public final class ListCriteria extends ACriteria {
          * @return Builder
          * @throws IllegalArgumentException If the name or trigger is null
          */
+        @NotNull
         public Builder put(@NotNull String name, @NotNull ATrigger trigger) throws IllegalArgumentException {
             if (name == null) throw new IllegalArgumentException("Name cannot be null!");
             if (trigger == null) throw new IllegalArgumentException("Trigger cannot be null!");
@@ -101,6 +102,7 @@ public final class ListCriteria extends ACriteria {
          * Builds the criteria.
          * @return Criteria
          */
+        @NotNull
         public ListCriteria build() {
             return new ListCriteria(triggers);
         }
