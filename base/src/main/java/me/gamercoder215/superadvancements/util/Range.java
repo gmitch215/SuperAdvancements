@@ -9,8 +9,14 @@ import java.util.function.Predicate;
  */
 public final class Range implements Predicate<Number> {
 
+    /**
+     * Range of {@linkplain Double#NEGATIVE_INFINITY negative infinity} to {@linkplain Double#POSITIVE_INFINITY positive infinity}
+     */
     public static final Range ANY = new Range(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
+    /**
+     * Range of 0 to 0
+     */
     public static final Range ZERO = new Range(0, 0);
 
     private double min;
@@ -151,4 +157,16 @@ public final class Range implements Predicate<Number> {
     public static Range max(int max) {
         return new Range(Integer.MIN_VALUE, max);
     }
+
+    /**
+     * Creates a new Range with the specified minimum and maximum.
+     * @param min Minimum Value
+     * @param max Maximum Value
+     * @return Range only matching values between the minimum and maximum
+     */
+    @NotNull
+    public static Range of(double min, double max) {
+    	return new Range(min, max);
+    }
+
 }
