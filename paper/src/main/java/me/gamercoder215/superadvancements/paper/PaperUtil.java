@@ -8,7 +8,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.chat.*;
 import org.intellij.lang.annotations.Subst;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.UUID;
 
@@ -80,42 +79,35 @@ class PaperUtil {
         @Subst("")
         String text = new TextComponent(event.getValue()).toPlainText();
 
-        try {
-            Field actionF = net.kyori.adventure.text.event.HoverEvent.Action.class.getDeclaredField(event.getAction().toString().toUpperCase());
-            net.kyori.adventure.text.event.HoverEvent.Action<?> action = (net.kyori.adventure.text.event.HoverEvent.Action<?>) actionF.get(null);
+        switch (event.getAction()) {
+            case SHOW_ITEM: {
+                Map<String, String> values = gson.fromJson(text, Map.class);
 
-            switch (event.getAction()) {
-                case SHOW_ITEM: {
-                    Map<String, String> values = gson.fromJson(text, Map.class);
+                @Subst("minecraft:air")
+                String item = values.get("item");
 
-                    @Subst("minecraft:air")
-                    String item = values.get("item");
-
-                    return net.kyori.adventure.text.event.HoverEvent.showItem(net.kyori.adventure.text.event.HoverEvent.ShowItem.of(
-                            Key.key(item),
-                            Integer.parseInt(values.get("count")),
-                            BinaryTagHolder.binaryTagHolder(values.get("nbt"))
-                    ));
-                }
-                case SHOW_TEXT:
-                    return net.kyori.adventure.text.event.HoverEvent.showText(Component.text(text));
-                case SHOW_ENTITY: {
-                    @Subst("")
-                    Map<String, String> values = gson.fromJson(text, Map.class);
-
-                    @Subst("minecraft:player")
-                    String type = values.get("type");
-
-                    return net.kyori.adventure.text.event.HoverEvent.showEntity(net.kyori.adventure.text.event.HoverEvent.ShowEntity.of(
-                            Key.key(type),
-                            UUID.fromString((values.get("id"))),
-                            Component.text(values.get("name"))
-                    ));
-                }
-                default: return null;
+                return net.kyori.adventure.text.event.HoverEvent.showItem(net.kyori.adventure.text.event.HoverEvent.ShowItem.of(
+                        Key.key(item),
+                        Integer.parseInt(values.get("count")),
+                        BinaryTagHolder.binaryTagHolder(values.get("nbt"))
+                ));
             }
-        } catch (ReflectiveOperationException e) {
-            return null;
+            case SHOW_TEXT:
+                return net.kyori.adventure.text.event.HoverEvent.showText(Component.text(text));
+            case SHOW_ENTITY: {
+                @Subst("")
+                Map<String, String> values = gson.fromJson(text, Map.class);
+
+                @Subst("minecraft:player")
+                String type = values.get("type");
+
+                return net.kyori.adventure.text.event.HoverEvent.showEntity(net.kyori.adventure.text.event.HoverEvent.ShowEntity.of(
+                        Key.key(type),
+                        UUID.fromString((values.get("id"))),
+                        Component.text(values.get("name"))
+                ));
+            }
+            default: return null;
         }
     }
 
