@@ -1,6 +1,7 @@
 package me.gamercoder215.superadvancements.advancement;
 
-import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
+import me.gamercoder215.superadvancements.advancement.criteria.ACriteriaProgress;
+
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,15 +22,13 @@ public interface AProgress {
     Player getPlayer();
 
     /**
-     * <p>Grants the Advancement to the player.</p>
-     * <p>An update will not occur automatically.</p>
+     * Grants the advancement to the player.
      * @return true if the Advancement was granted, false if the Advancement was already granted
      */
     boolean grant();
 
     /**
-     * <p>Revokes the Advancement from the player.</p>
-     * <p>An update will not occur automatically.</p>
+     * Revokes the Advancement from the player.
      * @return true if the Advancement was revoked, false if the Advancement was already revoked
      */
     boolean revoke();
@@ -41,18 +40,33 @@ public interface AProgress {
     boolean isDone();
 
     /**
+     * Fetches all of the criteria for this AProgress.
+     * @return Map of Criteria Names to Criteria
+     */
+    @NotNull
+    Map<String, ACriteriaProgress> getCriteria();
+
+    /**
      * Fetches an immutable copy of all of the criteria for this Advancement that has not been completed.
      * @return Map of Criteria Names to Criteria
      */
     @NotNull
-    Map<String, ACriteria> getRemainingCriteria();
+    Map<String, ACriteriaProgress> getRemainingCriteria();
 
     /**
      * Fetches an immutable copy of all of the criteria for this Advancement that has been completed.
      * @return Map of Criteria Names to Criteria
      */
     @NotNull
-    Map<String, ACriteria> getAwardedCriteria();
+    Map<String, ACriteriaProgress> getAwardedCriteria();
+
+    /**
+     * Fetches the criteria progress for the criteria with the given name.
+     * @param name Criteria Name
+     * @return Criteria Progress, or null if not found
+     */
+    @Nullable
+    ACriteriaProgress getCriteriaProgress(@NotNull String name);
 
     /**
      * Fetches the amount of criteria that has been completed.
@@ -66,9 +80,22 @@ public interface AProgress {
      * Fetches the total amount of criteria for this Advancement.
      * @return Total Criteria Amount
      */
-    default int getTotalCriteriaProgress() {
+    default int getTotalCriteria() {
         return getAwardedCriteria().size() + getRemainingCriteria().size();
     }
+
+    /**
+     * Fetches the percentage between 0.0F and 1.0F of competed criteria.
+     * @return Completed Criteria Percentage
+     */
+    float getPercentageCompleted();
+
+    /**
+     * Fetches the text to display on the client for this Advancement's progress.
+     * @return Progress Text, or null if no more than 2 requirements
+     */
+    @Nullable
+    String getProgressText();
 
     /**
      * Grants the criteria with the given name.
