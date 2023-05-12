@@ -4,3 +4,4 @@ build/
 *.jar
 !gradle-wrapper.jar
 .idea/
+.vscode/
