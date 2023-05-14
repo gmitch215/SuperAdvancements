@@ -2,6 +2,7 @@ package me.gamercoder215.superadvancements.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -89,6 +90,19 @@ public final class Range implements Predicate<Number> {
      */
     public boolean isWithinExclusiveRange(double number) {
         return number > min && number < max;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Range range = (Range) o;
+        return Double.compare(range.min, min) == 0 && Double.compare(range.max, max) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(min, max);
     }
 
     @Override
