@@ -1,24 +1,47 @@
 package me.gamercoder215.superadvancements.advancement.criteria;
 
+import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATrigger;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * Represents an abstract Criteria object
  */
-public abstract class ACriteria {
+public final class ACriteria {
 
-    private final ACriteriaType type;
+    private final ATrigger trigger;
 
-    ACriteria(@NotNull ACriteriaType type) {
-        this.type = type;
+    /**
+     * Constructs a new criteria with the given trigger.
+     * @param trigger Trigger for this criteria
+     * @throws IllegalArgumentException if trigger is null
+     */
+    public ACriteria(@NotNull ATrigger trigger) throws IllegalArgumentException {
+        if (trigger == null) throw new IllegalArgumentException("Trigger cannot be null");
+        this.trigger = trigger;
     }
 
     /**
-     * Gets the type of the Criteria.
-     * @return Criteria Type
+     * Fetches the trigger for this criteria.
+     * @return Trigger for this criteria
      */
     @NotNull
-    public final ACriteriaType getType() {
-        return type;
+    public ATrigger getTrigger() {
+        return trigger;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ACriteria that = (ACriteria) o;
+        return Objects.equals(trigger, that.trigger);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(trigger);
+    }
+
 }
