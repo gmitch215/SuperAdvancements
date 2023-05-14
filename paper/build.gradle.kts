@@ -1,6 +1,8 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
+    api(project(":superadvancements"))
+    api(project(":superadvancements-abstract"))
     api(project(":superadvancements-spigot"))
 
     compileOnly("com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT") {
@@ -39,6 +41,11 @@ dependencies {
 
 description = "Paper (Adventure Components) Implementation of the SuperAdvancements API"
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 tasks {
     javadoc {
         sourceSets["main"].allJava.srcDir("src/main/javadoc")
@@ -46,27 +53,7 @@ tasks {
         exclude("**/abstract/**", "**/nms/**")
     }
 
-    register("sourcesJar", Jar::class.java) {
-        dependsOn("classes")
-
-        archiveFileName.set("SuperAdvancements-PaperAPI-${project.version}-sources.jar")
-        from(sourceSets["main"].allSource)
-    }
-
-    register("javadocJar", Jar::class.java) {
-        dependsOn("javadoc")
-
-        archiveFileName.set("SuperAdvancements-PaperAPI-${project.version}-javadoc.jar")
-        from(javadoc.get().destinationDir)
-    }
-
     withType<ShadowJar> {
         dependsOn("sourcesJar", "javadocJar")
-        archiveFileName.set("SuperAdvancements-PaperAPI-${project.version}.jar")
     }
-}
-
-artifacts {
-    add("archives", tasks["sourcesJar"])
-    add("archives", tasks["javadocJar"])
 }

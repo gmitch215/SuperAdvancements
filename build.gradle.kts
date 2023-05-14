@@ -24,14 +24,6 @@ sonarqube {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-        }
-    }
-}
-
 tasks {
     register("allJavadoc", Javadoc::class.java) {
         val projects = listOf(
@@ -63,6 +55,10 @@ allprojects {
     version = pVersion
     description = "Advanced & Customizable Advancement API, made for SpigotMC 1.12+."
 
+    apply(plugin = "maven-publish")
+    apply<JavaPlugin>()
+    apply<JavaLibraryPlugin>()
+
     repositories {
         mavenCentral()
         mavenLocal()
@@ -77,13 +73,66 @@ allprojects {
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://libraries.minecraft.net/")
     }
+
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                groupId = pGroup
+                artifactId = project.name
+                version = pVersion
+
+                pom {
+                    description.set(project.description)
+                    name.set("SuperAdvancements")
+
+                    licenses {
+                        license {
+                            name.set("GPL-3.0")
+                            url.set("https://github.com/GamerCoder215/SuperAdvancements/blob/master/LICENSE")
+                        }
+                    }
+
+                    scm {
+                        connection.set("scm:git:git://GamerCoder215/SuperAdvancements.git")
+                        developerConnection.set("scm:git:ssh://GamerCoder215/SuperAdvancements.git")
+                        url.set("https://github.com/GamerCoder215/SuperAdvancements")
+                    }
+
+                    inceptionYear.set("2023")
+                }
+
+                from(components["java"])
+            }
+
+            repositories {
+                maven {
+                    credentials {
+                        username = System.getenv("JENKINS_USERNAME")
+                        password = System.getenv("JENKINS_PASSWORD")
+                    }
+
+                    val releases = "https://repo.codemc.io/repository/maven-releases/"
+                    val snapshots = "https://repo.codemc.io/repository/maven-snapshots/"
+                    url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshots else releases)
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        getByName<MavenPublication>("maven") {
+            pom {
+                packaging = "pom"
+            }
+        }
+    }
 }
 
 val jvmVersion = JavaVersion.VERSION_11
 
 subprojects {
-    apply<JavaPlugin>()
-    apply<JavaLibraryPlugin>()
     apply<JacocoPlugin>()
     apply(plugin = "org.sonarqube")
     apply(plugin = "com.github.johnrengelman.shadow")
@@ -99,6 +148,14 @@ subprojects {
     java {
         sourceCompatibility = jvmVersion
         targetCompatibility = jvmVersion
+    }
+
+    publishing {
+        publications {
+            getByName<MavenPublication>("maven") {
+                artifact(tasks["shadowJar"])
+            }
+        }
     }
 
     tasks {
@@ -126,6 +183,10 @@ subprojects {
             testLogging {
                 events("passed", "skipped", "failed")
             }
+
+            classpath += sourceSets["main"].compileClasspath
+            classpath += sourceSets["main"].allJava
+
             finalizedBy(jacocoTestReport)
         }
 
@@ -148,9 +209,10 @@ subprojects {
                     "Implementation-Vendor" to pAuthor
                 )
             }
+
             exclude("META-INF", "META-INF/**")
 
-            archiveFileName.set("${project.name}-${project.version}.jar")
+            archiveClassifier.set("")
         }
     }
 }
