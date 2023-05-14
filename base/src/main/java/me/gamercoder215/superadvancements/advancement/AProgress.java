@@ -1,13 +1,12 @@
 package me.gamercoder215.superadvancements.advancement;
 
 import me.gamercoder215.superadvancements.advancement.criteria.ACriteriaProgress;
-
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Date;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Represents the progress a Player has made for a specific Advancement
@@ -51,14 +50,22 @@ public interface AProgress {
      * @return Map of Criteria Names to Criteria
      */
     @NotNull
-    Map<String, ACriteriaProgress> getRemainingCriteria();
+    default Map<String, ACriteriaProgress> getRemainingCriteria() {
+        return getCriteria().entrySet().stream()
+                .filter(e -> !e.getValue().isDone())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
     /**
      * Fetches an immutable copy of all of the criteria for this Advancement that has been completed.
      * @return Map of Criteria Names to Criteria
      */
     @NotNull
-    Map<String, ACriteriaProgress> getAwardedCriteria();
+    default Map<String, ACriteriaProgress> getAwardedCriteria() {
+        return getCriteria().entrySet().stream()
+                .filter(e -> e.getValue().isDone())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
     /**
      * Fetches the criteria progress for the criteria with the given name.
@@ -66,7 +73,9 @@ public interface AProgress {
      * @return Criteria Progress, or null if not found
      */
     @Nullable
-    ACriteriaProgress getCriteriaProgress(@NotNull String name);
+    default ACriteriaProgress getCriteriaProgress(@NotNull String name) {
+        return getCriteria().get(name);
+    }
 
     /**
      * Fetches the amount of criteria that has been completed.
@@ -81,7 +90,7 @@ public interface AProgress {
      * @return Total Criteria Amount
      */
     default int getTotalCriteria() {
-        return getAwardedCriteria().size() + getRemainingCriteria().size();
+        return getCriteria().size();
     }
 
     /**
@@ -110,18 +119,5 @@ public interface AProgress {
      * @return true if the criteria was revoked, false if the criteria was already revoked
      */
     boolean revokeCriteria(@NotNull String name);
-
-    /**
-     * Fetches the timestamp for the last time this progress was updated, or null if it has not been updated yet
-     * @return Last Update Timestamp
-     */
-    @Nullable
-    Date getLastUpdate();
-
-    /**
-     * Sets the timestamp for the last time this progress was updated.
-     * @param timestamp Last Update Timestamp
-     */
-    void setLastUpdate(@Nullable Date timestamp);
 
 }
