@@ -6,7 +6,10 @@ import me.gamercoder215.superadvancements.util.Range;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -1115,7 +1118,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
          * Represents an Entity Predicate that matches any entity.
          */
         public static final Entity ANY = new Entity(
-                EnumSet.allOf(EntityType.class),
+                null,
                 Range.ANY,
                 Location.ANY,
                 Location.ANY,
@@ -1130,7 +1133,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
                 null
         );
 
-        private final Set<EntityType> types;
+        private final EntityType type;
         private final Range distanceToPlayer;
         private final Location location;
         private final Location steppingLocation;
@@ -1149,10 +1152,10 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
         private final Entity passenger;
         private final Entity target;
 
-        private Entity(Set<EntityType> types, Range distanceToPlayer, Location location, Location steppingLocation, boolean isOnFire, boolean isCrouching, boolean isSprinting, boolean isSwimming,
+        private Entity(EntityType type, Range distanceToPlayer, Location location, Location steppingLocation, boolean isOnFire, boolean isCrouching, boolean isSprinting, boolean isSwimming,
                        boolean isBaby, Map<EquipmentSlot, Item> equipment, Entity vehicle, Entity passenger, Entity target) {
 
-            this.types = types;
+            this.type = type;
             this.distanceToPlayer = distanceToPlayer;
             this.location = location;
             this.steppingLocation = steppingLocation;
@@ -1168,12 +1171,12 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
         }
 
         /**
-         * Fetches an immutable set of the types of entities that this predicate will match.
-         * @return Entity Types
+         * Fetches the entity type that this predicate will match.
+         * @return Entity Type
          */
         @NotNull
-        public Set<EntityType> getTypes() {
-            return ImmutableSet.copyOf(types);
+        public EntityType getType() {
+            return type;
         }
 
         /**
@@ -1284,7 +1287,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Entity entity = (Entity) o;
-            return isOnFire == entity.isOnFire && isCrouching == entity.isCrouching && isSprinting == entity.isSprinting && isSwimming == entity.isSwimming && isBaby == entity.isBaby && Objects.equals(types, entity.types) && Objects.equals(distanceToPlayer, entity.distanceToPlayer) && Objects.equals(location, entity.location) && Objects.equals(steppingLocation, entity.steppingLocation) && Objects.equals(equipment, entity.equipment) && Objects.equals(vehicle, entity.vehicle) && Objects.equals(passenger, entity.passenger) && Objects.equals(target, entity.target);
+            return isOnFire == entity.isOnFire && isCrouching == entity.isCrouching && isSprinting == entity.isSprinting && isSwimming == entity.isSwimming && isBaby == entity.isBaby && type == entity.type && Objects.equals(distanceToPlayer, entity.distanceToPlayer) && Objects.equals(location, entity.location) && Objects.equals(steppingLocation, entity.steppingLocation) && Objects.equals(equipment, entity.equipment) && Objects.equals(vehicle, entity.vehicle) && Objects.equals(passenger, entity.passenger) && Objects.equals(target, entity.target);
         }
 
         @Override
@@ -1292,13 +1295,13 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
 
         @Override
         public int hashCode() {
-            return Objects.hash(types, distanceToPlayer, location, steppingLocation, isOnFire, isCrouching, isSprinting, isSwimming, isBaby, equipment, vehicle, passenger, target);
+            return Objects.hash(type, distanceToPlayer, location, steppingLocation, isOnFire, isCrouching, isSprinting, isSwimming, isBaby, equipment, vehicle, passenger, target);
         }
 
         @Override
         public String toString() {
             return "Entity{" +
-                    "types=" + types +
+                    "types=" + type +
                     ", distanceToPlayer=" + distanceToPlayer +
                     ", location=" + location +
                     ", steppingLocation=" + steppingLocation +
@@ -1334,7 +1337,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
 
             return new Entity(
-                    Set.of(entity.getType()),
+                    entity.getType(),
                     null,
                     null,
                     null,
@@ -1364,7 +1367,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
 
             private Builder() {}
 
-            private final Set<EntityType> types = new HashSet<>();
+            private EntityType type;
             private Range distanceToPlayer = Range.ANY;
             private Location location = Location.ANY;
             private Location steppingLocation = Location.ANY;
@@ -1391,9 +1394,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             public Builder copy(@NotNull Entity entity) throws IllegalArgumentException {
                 if (entity == null) throw new IllegalArgumentException("Entity cannot be null");
 
-                this.types.clear();
-                this.types.addAll(entity.getTypes());
-
+                this.type = entity.type;
                 this.distanceToPlayer = entity.distanceToPlayer;
                 this.location = entity.location;
                 this.steppingLocation = entity.steppingLocation;
@@ -1413,35 +1414,13 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             }
 
             /**
-             * Adds an entity type to this entity predicate builder.
+             * Sets the entity type to this entity predicate builder.
              * @param type Entity Type
              * @return this builder, for chaining
              */
             @NotNull
             public Builder type(@NotNull EntityType type) {
-                this.types.add(type);
-                return this;
-            }
-
-            /**
-             * Adds an array of entity types to this entity predicate builder.
-             * @param types Array of Entity Types
-             * @return this builder, for chaining
-             */
-            @NotNull
-            public Builder types(@NotNull EntityType... types) {
-                this.types.addAll(Arrays.asList(types));
-                return this;
-            }
-
-            /**
-             * Adds an iterable of entity types to this entity predicate builder.
-             * @param types Collection of Entity Types
-             * @return this builder, for chaining
-             */
-            @NotNull
-            public Builder types(@NotNull Iterable<? extends EntityType> types) {
-                types.forEach(this.types::add);
+                this.type = type;
                 return this;
             }
 
@@ -1596,7 +1575,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             @NotNull
             public Entity build() {
                 return new Entity(
-                        this.types,
+                        this.type,
                         this.distanceToPlayer,
                         this.location,
                         this.steppingLocation,
@@ -1619,13 +1598,18 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
      */
     final class Damage implements ATriggerPredicate<Damage> {
 
+        /**
+         * Represents a Damage Predicate that matches any damage.
+         */
+        public static final Damage ANY = new Damage(Range.ANY, Range.ANY, Entity.ANY, false, null);
+
         private final Range dealt;
         private final Range taken;
         private final Entity source;
         private final boolean blocked;
-        private final EntityDamageEvent.DamageCause cause;
+        private final DamageTag cause;
 
-        private Damage(Range dealt, Range taken, Entity source, boolean blocked, EntityDamageEvent.DamageCause cause) {
+        private Damage(Range dealt, Range taken, Entity source, boolean blocked, DamageTag cause) {
             this.dealt = dealt;
             this.taken = taken;
             this.source = source;
@@ -1673,7 +1657,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
          * @return Damage Cause
          */
         @NotNull
-        public EntityDamageEvent.DamageCause getCause() {
+        public DamageTag getCause() {
             return cause;
         }
 
@@ -1725,7 +1709,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
                     .taken(Range.exact(event.getFinalDamage()))
                     .source(Entity.of(event.getEntity()))
                     .blocked(event.isCancelled())
-                    .cause(event.getCause())
+                    .cause(DamageTag.from(event.getCause()))
                     .build();
         }
 
@@ -1738,7 +1722,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
             private Range taken = Range.ANY;
             private Entity source = Entity.ANY;
             private boolean blocked = false;
-            private EntityDamageEvent.DamageCause cause;
+            private DamageTag cause;
 
             private Builder() {}
 
@@ -1809,9 +1793,7 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
              * @throws IllegalArgumentException if the damage cause is null
              */
             @NotNull
-            public Builder cause(@NotNull EntityDamageEvent.DamageCause cause) throws IllegalArgumentException {
-                if (cause == null) throw new IllegalArgumentException("Damage cause cannot be null!");
-
+            public Builder cause(@Nullable DamageTag cause) throws IllegalArgumentException {
                 this.cause = cause;
                 return this;
             }
