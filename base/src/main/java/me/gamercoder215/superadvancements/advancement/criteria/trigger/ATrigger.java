@@ -3,7 +3,7 @@ package me.gamercoder215.superadvancements.advancement.criteria.trigger;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import me.gamercoder215.superadvancements.advancement.criteria.ListCriteria;
+import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
 import me.gamercoder215.superadvancements.util.Range;
 import org.bukkit.*;
 import org.bukkit.block.BlockState;
@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 /**
- * <p>Represents a trigger for a {@link ListCriteria} criterion.</p>
+ * <p>Represents a trigger for a {@link ACriteria}.</p>
  * <p>Null values inputted in the static methods will have those extra conditions ignored.</p>
  * <p>For more information on triggers, see <a href="https://minecraft.fandom.com/wiki/Advancement/JSON_format#Criteria">Advancement/JSON_format</a></p>
  */
@@ -53,7 +53,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger allayDropItemOnBlock() {
-        return allayDropItemOnBlock(null, null);
+        return allayDropItemOnBlock(ATriggerPredicate.Location.ANY, ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -64,7 +64,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger allayDropItemOnBlock(@Nullable ATriggerPredicate.Location center, @Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("allay_drop_item_on_block", Map.of("location", center, "item", item));
+        return new ATrigger("allay_drop_item_on_block", of("location", center, "item", item));
     }
 
     /**
@@ -82,7 +82,18 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger beeNestDestroyed() {
-        return beeNestDestroyed(null, null, null);
+        return beeNestDestroyed(Material.AIR, ATriggerPredicate.Item.ANY, Range.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player breaks a bee nest or beehive.
+     * @param block The block that should be broken.
+     * @param item The item predicate for what was used to break the block.
+     * @return Bee Nest Destroyed Trigger
+     */
+    @NotNull
+    public static ATrigger beeNestDestroyed(@Nullable Material block, @Nullable ATriggerPredicate.Item item) {
+        return beeNestDestroyed(block, item, Range.ANY);
     }
 
     /**
@@ -93,8 +104,8 @@ public final class ATrigger implements Keyed {
      * @return Bee Nest Destroyed Trigger
      */
     @NotNull
-    public static ATrigger beeNestDestroyed(@Nullable Material block, @Nullable ATriggerPredicate.Item item, @Nullable Range beesInside) {
-        return new ATrigger("bee_nest_destroyed", Map.of("block", block, "item", item, "num_bees_inside", beesInside));
+    public static ATrigger beeNestDestroyed(@Nullable Material block, @Nullable ATriggerPredicate.Item item, @NotNull Range beesInside) {
+        return new ATrigger("bee_nest_destroyed", of("block", block, "item", item, "num_bees_inside", beesInside));
     }
 
     /**
@@ -103,7 +114,16 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger bredAnimals() {
-        return bredAnimals(null, null, null);
+        return bredAnimals(ATriggerPredicate.Entity.ANY, ATriggerPredicate.Entity.ANY, ATriggerPredicate.Entity.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player breeds two animals.
+     * @param child The child entity predicate.
+     * @return Bred Animals Trigger
+     */
+    public static ATrigger bredAnimals(@Nullable ATriggerPredicate.Entity child) {
+        return bredAnimals(child, ATriggerPredicate.Entity.ANY, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -126,7 +146,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger bredAnimals(@Nullable ATriggerPredicate.Entity child, @Nullable ATriggerPredicate.Entity parent, @Nullable ATriggerPredicate.Entity partner) {
-        return new ATrigger("bred_animals", Map.of("child", child, "parent", parent, "partner", partner));
+        return new ATrigger("bred_animals", of("child", child, "parent", parent, "partner", partner));
     }
 
     /**
@@ -145,7 +165,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger brewedPotion(@Nullable PotionType potion) {
-        return new ATrigger("brewed_potion", Map.of("potion", potion));
+        return new ATrigger("brewed_potion", potion == null ? null : of("potion", potion));
     }
 
     /**
@@ -165,7 +185,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger changedDimension(@Nullable World from, @Nullable World to) {
-        return new ATrigger("changed_dimension", Map.of("from", from, "to", to));
+        return new ATrigger("changed_dimension", of("from", from, "to", to));
     }
 
     /**
@@ -174,7 +194,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger channeledLightning() {
-        return channeledLightning((ATriggerPredicate.Entity) null);
+        return channeledLightning(ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -184,7 +204,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger channeledLightning(@Nullable Iterable<? extends ATriggerPredicate.Entity> victims) {
-        return new ATrigger("channeled_lightning", Map.of("victims", victims == null ? null : Iterables.toArray(victims, ATriggerPredicate.Entity.class)));
+        return new ATrigger("channeled_lightning", of("victims", victims == null ? null : Iterables.toArray(victims, ATriggerPredicate.Entity.class)));
     }
 
     /**
@@ -194,7 +214,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger channeledLightning(@Nullable ATriggerPredicate.Entity... victims) {
-        return new ATrigger("channeled_lightning", Map.of("victims", victims));
+        return new ATrigger("channeled_lightning", of("victims", victims));
     }
 
     /**
@@ -203,7 +223,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger constructBeacon() {
-        return constructBeacon(null);
+        return constructBeacon(Range.ANY);
     }
 
     /**
@@ -213,7 +233,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger constructBeacon(@Nullable Range level) {
-        return new ATrigger("construct_beacon", Map.of("level", level));
+        return new ATrigger("construct_beacon", of("level", level));
     }
 
     /**
@@ -222,7 +242,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger consumeItem() {
-        return consumeItem(null);
+        return consumeItem(ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -232,7 +252,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger consumeItem(@Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("consume_item", Map.of("item", item));
+        return new ATrigger("consume_item", of("item", item));
     }
 
     /**
@@ -241,18 +261,28 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger curedZombieVillager() {
-        return curedZombieVillager(null, null);
+        return curedZombieVillager(ATriggerPredicate.Entity.ANY, ATriggerPredicate.Entity.ANY);
     }
 
     /**
      * Represents a trigger that occurs when a player cures a zombie villager.
      * @param villager The villager that should be cured.
-     * @param zombie The zombie that should be cured.
+     * @return Cured Zombie Villager Trigger
+     */
+    @NotNull
+    public static ATrigger curedZombieVillager(@Nullable ATriggerPredicate.Entity villager) {
+        return curedZombieVillager(villager, ATriggerPredicate.Entity.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player cures a zombie villager.
+     * @param villager The villager that should be cured.
+     * @param zombie The zombie that is cured right after the conversion is complete.
      * @return Cured Zombie Villager Trigger
      */
     @NotNull
     public static ATrigger curedZombieVillager(@Nullable ATriggerPredicate.Entity villager, @Nullable ATriggerPredicate.Entity zombie) {
-        return new ATrigger("cured_zombie_villager", Map.of("villager", villager, "zombie", zombie));
+        return new ATrigger("cured_zombie_villager", of("villager", villager, "zombie", zombie));
     }
 
     /**
@@ -261,7 +291,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger enchantedItem() {
-        return enchantedItem(null, null);
+        return enchantedItem(ATriggerPredicate.Item.ANY, Range.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player enchants an item through an enchanting table.
+     * @param item The item that should be enchanted.
+     * @return Enchanted Item Trigger
+     */
+    @NotNull
+    public static ATrigger enchantedItem(@Nullable ATriggerPredicate.Item item) {
+        return enchantedItem(item, Range.ANY);
     }
 
     /**
@@ -272,7 +312,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger enchantedItem(@Nullable ATriggerPredicate.Item item, @Nullable Range levels) {
-        return new ATrigger("enchanted_item", Map.of("item", item, "levels", levels));
+        return new ATrigger("enchanted_item", of("item", item, "levels", levels));
     }
 
     /**
@@ -302,7 +342,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger enterBlock(@Nullable Material block, @Nullable BlockState state) {
-        return new ATrigger("enter_block", Map.of("block", block, "state", state));
+        return new ATrigger("enter_block", of("block", block, "state", state));
     }
 
     /**
@@ -311,7 +351,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger entityHurtPlayer() {
-        return entityHurtPlayer(null);
+        return entityHurtPlayer(ATriggerPredicate.Damage.ANY);
     }
 
     /**
@@ -321,7 +361,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger entityHurtPlayer(@Nullable ATriggerPredicate.Damage damage) {
-        return new ATrigger("entity_hurt_player", Map.of("damage", damage));
+        return new ATrigger("entity_hurt_player", of("damage", damage));
     }
 
     /**
@@ -336,12 +376,12 @@ public final class ATrigger implements Keyed {
     /**
      * Represents a trigger that occurs when a player dies to a living entity.
      * @param entity The entity that should kill the player.
-     * @param killingBlow The damage predicate for the type of damage the player was killed by.
+     * @param killingBlow The damage tag that should be used to kill the player.
      * @return Entity Killed Player Trigger
      */
     @NotNull
-    public static ATrigger entityKilledPlayer(@Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Damage killingBlow) {
-        return new ATrigger("entity_killed_player", Map.of("entity", entity, "killing_blow", killingBlow));
+    public static ATrigger entityKilledPlayer(@Nullable ATriggerPredicate.Entity entity, @Nullable DamageTag killingBlow) {
+        return new ATrigger("entity_killed_player", of("entity", entity, "killing_blow", killingBlow));
     }
 
     /**
@@ -350,9 +390,18 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger fallFromHeight() {
-        return fallFromHeight(null, null);
+        return fallFromHeight(Range.ANY, ATriggerPredicate.Location.ANY);
     }
 
+    /**
+     * Represents a trigger that occurs when a player lands after falling.
+     * @param distance The range of the distance the player should fall.
+     * @return Fall From Height Trigger
+     */
+    @NotNull
+    public static ATrigger fallFromHeight(@Nullable Range distance) {
+        return fallFromHeight(distance, ATriggerPredicate.Location.ANY);
+    }
 
     /**
      * Represents a trigger that occurs when a player lands after falling.
@@ -361,8 +410,8 @@ public final class ATrigger implements Keyed {
      * @return Fall From Height Trigger
      */
     @NotNull
-    public static ATrigger fallFromHeight(@Nullable ATriggerPredicate.Location startPosition, @Nullable Range distance) {
-        return new ATrigger("fall_from_height", Map.of("start_position", startPosition, "distance", distance));
+    public static ATrigger fallFromHeight(@Nullable Range distance, @Nullable ATriggerPredicate.Location startPosition) {
+        return new ATrigger("fall_from_height", of("start_position", startPosition, "distance", distance));
     }
 
     /**
@@ -371,19 +420,40 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger fishingRodHooked() {
-        return fishingRodHooked(null, null, null);
+        return fishingRodHooked(ATriggerPredicate.Item.ANY, ATriggerPredicate.Entity.ANY, ATriggerPredicate.Item.ANY);
     }
 
     /**
      * Represents a trigger that occurs when a player successfully catches an item with a fishing rod or pulls an entity with it.
-     * @param entity The entity that should be caught, or the fishing bobber if no entity is pulled.
-     * @param item The item that should be caught.
      * @param rod The fishing rod that should be used.
      * @return Fishing Rod Hooked Trigger
      */
     @NotNull
-    public static ATrigger fishingRodHooked(@Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Item rod) {
-        return new ATrigger("fishing_rod_hooked", Map.of("entity", entity, "item", item, "rod", rod));
+    public static ATrigger fishingRodHooked(@Nullable ATriggerPredicate.Item rod) {
+        return fishingRodHooked(rod, ATriggerPredicate.Entity.ANY, ATriggerPredicate.Item.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player successfully catches an item with a fishing rod or pulls an entity with it.
+     * @param rod The fishing rod that should be used.
+     * @param entity The entity that should be caught, or the fishing bobber if no entity is pulled.
+     * @return Fishing Rod Hooked Trigger
+     */
+    @NotNull
+    public static ATrigger fishingRodHooked(@Nullable ATriggerPredicate.Item rod, @Nullable ATriggerPredicate.Entity entity) {
+        return fishingRodHooked(rod, entity, ATriggerPredicate.Item.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player successfully catches an item with a fishing rod or pulls an entity with it.
+     * @param rod The fishing rod that should be used.
+     * @param entity The entity that should be caught, or the fishing bobber if no entity is pulled.
+     * @param item The item that should be caught.
+     * @return Fishing Rod Hooked Trigger
+     */
+    @NotNull
+    public static ATrigger fishingRodHooked(@Nullable ATriggerPredicate.Item rod, @Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Item item) {
+        return new ATrigger("fishing_rod_hooked", of("entity", entity, "item", item, "rod", rod));
     }
 
     /**
@@ -401,7 +471,27 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger inventoryChanged() {
-        return inventoryChanged(null, null, null, (Iterable<ATriggerPredicate.Item>) null);
+        return inventoryChanged(Range.ANY, Range.ANY, Range.ANY, (Iterable<ATriggerPredicate.Item>) null);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player's inventory changes.
+     * @param items The items that should be in the player's inventory.
+     * @return Inventory Changed Trigger
+     */
+    @NotNull
+    public static ATrigger inventoryChanged(@Nullable ATriggerPredicate.Item... items) {
+        return inventoryChanged(Range.ANY, Range.ANY, Range.ANY, items);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player's inventory changes.
+     * @param items The items that should be in the player's inventory.
+     * @return Inventory Changed Trigger
+     */
+    @NotNull
+    public static ATrigger inventoryChanged(@Nullable Iterable<? extends ATriggerPredicate.Item> items) {
+        return inventoryChanged(Range.ANY, Range.ANY, Range.ANY, items);
     }
 
     /**
@@ -414,7 +504,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger inventoryChanged(@Nullable Range emptySlots, @Nullable Range fullSlots, @Nullable Range occupiedSlots, @Nullable ATriggerPredicate.Item... items) {
-        return inventoryChanged(emptySlots, fullSlots, occupiedSlots, Arrays.asList(items));
+        return inventoryChanged(emptySlots, fullSlots, occupiedSlots, items == null ? null : Arrays.asList(items));
     }
 
     /**
@@ -427,7 +517,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger inventoryChanged(@Nullable Range emptySlots, @Nullable Range fullSlots, @Nullable Range occupiedSlots, @Nullable Iterable<? extends ATriggerPredicate.Item> items) {
-        return new ATrigger("inventory_changed", Map.of("empty_slots", emptySlots, "full_slots", fullSlots, "occupied_slots", occupiedSlots, "items", ImmutableSet.copyOf(items)));
+        return new ATrigger("inventory_changed", of("empty_slots", emptySlots, "full_slots", fullSlots, "occupied_slots", occupiedSlots, "items", items == null ? null : ImmutableSet.copyOf(items)));
     }
 
     /**
@@ -436,18 +526,29 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger itemDurabilityChanged() {
-        return itemDurabilityChanged(null, null);
+        return itemDurabilityChanged(ATriggerPredicate.Item.ANY, Range.ANY, Range.ANY);
     }
 
     /**
      * Represents a trigger that occurs when an item in an inventory has been damaged in any form.
+     * @param item The predicate for the item whose durability was changed.
+     * @return Item Durability Changed Trigger
+     */
+    @NotNull
+    public static ATrigger itemDurabilityChanged(@Nullable ATriggerPredicate.Item item) {
+        return itemDurabilityChanged(item, Range.ANY, Range.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when an item in an inventory has been damaged in any form.
+     * @param item The predicate for the item whose durability was changed.
      * @param delta The range of the change in durability (negative ranges indicate a decrease in durability).
      * @param durability The range of the durability of the item.
      * @return Item Durability Changed Trigger
      */
     @NotNull
-    public static ATrigger itemDurabilityChanged(@Nullable Range delta, @Nullable Range durability) {
-        return new ATrigger("item_durability_changed", Map.of("delta", delta, "durability", durability));
+    public static ATrigger itemDurabilityChanged(@Nullable ATriggerPredicate.Item item, @Nullable Range delta, @Nullable Range durability) {
+        return new ATrigger("item_durability_changed", of("item", item, "delta", delta, "durability", durability));
     }
 
     /**
@@ -456,7 +557,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger itemUsedOnBlock() {
-        return itemUsedOnBlock(null, null);
+        return itemUsedOnBlock(ATriggerPredicate.Location.ANY, ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -467,7 +568,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger itemUsedOnBlock(@Nullable ATriggerPredicate.Location location, @Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("item_used_on_block", Map.of("location", location, "item", item));
+        return new ATrigger("item_used_on_block", of("location", location, "item", item));
     }
 
     /**
@@ -476,7 +577,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger killMobNearSculkCatalyst() {
-        return killMobNearSculkCatalyst(null, null);
+        return killMobNearSculkCatalyst(ATriggerPredicate.Entity.ANY, null);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player is the source of a mob or player killed within the range of a Sculk Catalyst.
+     * @param entity The entity that was killed.
+     * @return Kill Mob Near Sculk Catalyst Trigger
+     */
+    @NotNull
+    public static ATrigger killMobNearSculkCatalyst(@Nullable ATriggerPredicate.Entity entity) {
+        return killMobNearSculkCatalyst(entity, null);
     }
 
     /**
@@ -486,8 +597,8 @@ public final class ATrigger implements Keyed {
      * @return Kill Mob Near Sculk Catalyst Trigger
      */
     @NotNull
-    public static ATrigger killMobNearSculkCatalyst(@Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Damage killingBlow) {
-        return new ATrigger("kill_mob_near_sculk_catalyst", Map.of("entity", entity, "killing_blow", killingBlow));
+    public static ATrigger killMobNearSculkCatalyst(@Nullable ATriggerPredicate.Entity entity, @Nullable DamageTag killingBlow) {
+        return new ATrigger("kill_mob_near_sculk_catalyst", of("entity", entity, "killing_blow", killingBlow));
     }
 
     /**
@@ -496,29 +607,29 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger killedByCrossbow() {
-        return killedByCrossbow(null, (Iterable<ATriggerPredicate.Entity>) null);
+        return killedByCrossbow(Range.ANY, (Iterable<ATriggerPredicate.Entity>) null);
     }
 
     /**
      * Represents a trigger that occurs when a player kills a mob or player with a crossbow.
-     * @param uniqueEntityTypes The range of how many entity TYPES were killed.
+     * @param uniqueEntityTypes The range of how many entity TYPES were killed from the shot.
      * @param victims The entities that were killed.
      * @return Killed By Crossbow Trigger
      */
     @NotNull
     public static ATrigger killedByCrossbow(@Nullable Range uniqueEntityTypes, @Nullable ATriggerPredicate.Entity... victims) {
-        return killedByCrossbow(uniqueEntityTypes, Arrays.asList(victims));
+        return killedByCrossbow(uniqueEntityTypes, victims == null ? null : Arrays.asList(victims));
     }
 
     /**
      * Represents a trigger that occurs when a player kills a mob or player with a crossbow.
-     * @param uniqueEntityTypes The range of how many entity TYPES were killed.
+     * @param uniqueEntityTypes The range of how many entity TYPES were killed from the shot.
      * @param victims The entities that were killed.
      * @return Killed By Crossbow Trigger
      */
     @NotNull
     public static ATrigger killedByCrossbow(@Nullable Range uniqueEntityTypes, @Nullable Iterable<? extends ATriggerPredicate.Entity> victims) {
-        return new ATrigger("killed_by_crossbow", Map.of("unique_entity_types", uniqueEntityTypes, "victims", ImmutableSet.copyOf(victims)));
+        return new ATrigger("killed_by_crossbow", of("unique_entity_types", uniqueEntityTypes, "victims", victims == null ? null : ImmutableSet.copyOf(victims)));
     }
 
     /**
@@ -527,7 +638,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger levitation() {
-        return levitation(null, null);
+        return levitation(Range.ANY, Range.ANY);
     }
 
     /**
@@ -538,7 +649,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger levitation(@Nullable Range distance, @Nullable Range duration) {
-        return new ATrigger("levitation", Map.of("distance", distance, "duration", duration));
+        return new ATrigger("levitation", of("distance", distance, "duration", duration));
     }
 
     /**
@@ -547,7 +658,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger lightningStrike() {
-        return lightningStrike(null, null);
+        return lightningStrike(ATriggerPredicate.Entity.ANY, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -558,7 +669,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger lightningStrike(@Nullable ATriggerPredicate.Entity lightning, @Nullable ATriggerPredicate.Entity bystander) {
-        return new ATrigger("lightning_strike", Map.of("lightning", lightning, "bystander", bystander));
+        return new ATrigger("lightning_strike", of("lightning", lightning, "bystander", bystander));
     }
 
     /**
@@ -576,7 +687,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger netherTravel() {
-        return netherTravel(null, null);
+        return netherTravel(ATriggerPredicate.Location.ANY, Range.ANY);
     }
 
     /**
@@ -587,7 +698,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger netherTravel(@Nullable ATriggerPredicate.Location startPosition, @Nullable Range distance) {
-        return new ATrigger("nether_travel", Map.of("start_position", startPosition, "distance", distance));
+        return new ATrigger("nether_travel", of("start_position", startPosition, "distance", distance));
     }
 
     /**
@@ -596,7 +707,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger placedBlock() {
-        return placedBlock(null, null, null, null);
+        return placedBlock(null, ATriggerPredicate.Item.ANY, ATriggerPredicate.Location.ANY, null);
     }
 
     /**
@@ -606,7 +717,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger placedBlock(@Nullable Material block) {
-        return placedBlock(block, null, null, null);
+        return placedBlock(block, ATriggerPredicate.Item.ANY, ATriggerPredicate.Location.ANY, null);
     }
 
     /**
@@ -619,7 +730,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger placedBlock(@Nullable Material block, @Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Location location, @Nullable BlockState state) {
-        return new ATrigger("placed_block", Map.of("block", block, "item", item, "location", location, "state", state));
+        return new ATrigger("placed_block", of("block", block, "item", item, "location", location, "state", state));
     }
 
     /**
@@ -635,10 +746,12 @@ public final class ATrigger implements Keyed {
      * Represents a trigger that occurs when a player generates the content of a container with a loot table set.
      * @param lootTable The NamespacedKey of the loot table that was used to generate the container.
      * @return Player Generates Container Loot Trigger
+     * @throws IllegalArgumentException if loot table key is null
      */
     @NotNull
-    public static ATrigger playerGeneratesContainerLoot(@Nullable NamespacedKey lootTable) {
-        return new ATrigger("player_generates_container_loot", Map.of("loot_table", lootTable));
+    public static ATrigger playerGeneratesContainerLoot(@NotNull NamespacedKey lootTable) throws IllegalArgumentException {
+        if (lootTable == null) throw new IllegalArgumentException("Loot Table cannot be null");
+        return new ATrigger("player_generates_container_loot", of("loot_table", lootTable));
     }
 
     /**
@@ -648,7 +761,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger playerHurtEntity(@Nullable ATriggerPredicate.Damage damage) {
-        return playerHurtEntity(damage, null);
+        return playerHurtEntity(damage, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -659,7 +772,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger playerHurtEntity(@Nullable ATriggerPredicate.Damage damage, @Nullable ATriggerPredicate.Entity entity) {
-        return new ATrigger("player_hurt_entity", Map.of("damage", damage, "entity", entity));
+        return new ATrigger("player_hurt_entity", of("damage", damage, "entity", entity));
     }
 
     /**
@@ -668,18 +781,28 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger playerInteractedWithEntity() {
-        return playerInteractedWithEntity(null, null);
+        return playerInteractedWithEntity(ATriggerPredicate.Entity.ANY, ATriggerPredicate.Item.ANY);
     }
 
     /**
      * Represents a trigger that occurs when a player interacts with an entity.
-     * @param item The item predicate for the item used to interact with the entity.
      * @param entity The entity predicate for the entity that was interacted with.
      * @return Player Interacted With Entity Trigger
      */
     @NotNull
-    public static ATrigger playerInteractedWithEntity(@Nullable ATriggerPredicate.Item item, ATriggerPredicate.Entity entity) {
-        return new ATrigger("player_interacted_with_entity", Map.of("item", item, "entity", entity));
+    public static ATrigger playerInteractedWithEntity(@Nullable ATriggerPredicate.Entity entity) {
+        return playerInteractedWithEntity(entity, ATriggerPredicate.Item.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player interacts with an entity.
+     * @param entity The entity predicate for the entity that was interacted with.
+     * @param item The item predicate for the item used to interact with the entity.
+     * @return Player Interacted With Entity Trigger
+     */
+    @NotNull
+    public static ATrigger playerInteractedWithEntity(@Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Item item) {
+        return new ATrigger("player_interacted_with_entity", of("item", item, "entity", entity));
     }
 
     /**
@@ -688,7 +811,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger playerKilledEntity() {
-        return playerKilledEntity(null, null);
+        return playerKilledEntity(ATriggerPredicate.Entity.ANY, null);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player kills another entity.
+     * @param entity The entity predicate for the entity that was killed.
+     * @return Player Killed Entity Trigger
+     */
+    @NotNull
+    public static ATrigger playerKilledEntity(@Nullable ATriggerPredicate.Entity entity) {
+        return playerKilledEntity(entity, null);
     }
 
     /**
@@ -698,17 +831,20 @@ public final class ATrigger implements Keyed {
      * @return Player Killed Entity Trigger
      */
     @NotNull
-    public static ATrigger playerKilledEntity(@Nullable ATriggerPredicate.Entity entity, @Nullable ATriggerPredicate.Damage killingBlow) {
-        return new ATrigger("player_killed_entity", Map.of("entity", entity, "killing_blow", killingBlow));
+    public static ATrigger playerKilledEntity(@Nullable ATriggerPredicate.Entity entity, @Nullable DamageTag killingBlow) {
+        return new ATrigger("player_killed_entity", of("entity", entity, "killing_blow", killingBlow));
     }
 
     /**
      * Represents a trigger that occurs when a player unlocks a recipe.
+     * @param recipe The key of the recipe that should be unlocked.
      * @return Recipe Unlocked Trigger
+     * @throws IllegalArgumentException if the recipe is null
      */
     @NotNull
-    public static ATrigger recipeUnlocked() {
-        return new ATrigger("recipe_unlocked", null);
+    public static ATrigger recipeUnlocked(@NotNull NamespacedKey recipe) throws IllegalArgumentException {
+        if (recipe == null) throw new IllegalArgumentException("Recipe cannot be null");
+        return new ATrigger("recipe_unlocked", of("recipe", recipe));
     }
 
     /**
@@ -717,7 +853,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger rideEntityInLava() {
-        return rideEntityInLava(null, null);
+        return rideEntityInLava(ATriggerPredicate.Location.ANY, Range.ANY);
     }
 
     /**
@@ -728,7 +864,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger rideEntityInLava(@Nullable ATriggerPredicate.Location startPosition, @Nullable Range distance) {
-        return new ATrigger("ride_entity_in_lava", Map.of("start_position", startPosition, "distance", distance));
+        return new ATrigger("ride_entity_in_lava", of("start_position", startPosition, "distance", distance));
     }
 
     /**
@@ -737,7 +873,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger shotCrossbow() {
-        return shotCrossbow(null);
+        return shotCrossbow(ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -747,7 +883,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger shotCrossbow(@Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("shot_crossbow", Map.of("item", item));
+        return new ATrigger("shot_crossbow", of("item", item));
     }
 
     /**
@@ -786,7 +922,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger slideDownBlock(@Nullable Material block, @Nullable BlockState state) {
-        return new ATrigger("slide_down_block", Map.of("block", block, "state", state));
+        return new ATrigger("slide_down_block", of("block", block, "state", state));
     }
 
     /**
@@ -804,7 +940,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger tameAnimal() {
-        return tameAnimal(null);
+        return tameAnimal(ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -814,7 +950,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger tameAnimal(@Nullable ATriggerPredicate.Entity entity) {
-        return new ATrigger("tame_animal", Map.of("entity", entity));
+        return new ATrigger("tame_animal", of("entity", entity));
     }
 
     /**
@@ -823,7 +959,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger targetHit() {
-        return targetHit(null, null);
+        return targetHit(Range.ANY, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -833,7 +969,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger targetHit(@Nullable Range signalStrength) {
-        return targetHit(signalStrength, null);
+        return targetHit(signalStrength, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -844,7 +980,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger targetHit(@Nullable Range signalStrength, @Nullable ATriggerPredicate.Entity projectile) {
-        return new ATrigger("target_hit", Map.of("signal_strength", signalStrength, "projectile", projectile));
+        return new ATrigger("target_hit", of("signal_strength", signalStrength, "projectile", projectile));
     }
 
     /**
@@ -853,7 +989,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger thrownItemPickedUpByEntity() {
-        return thrownItemPickedUpByEntity(null, null);
+        return thrownItemPickedUpByEntity(ATriggerPredicate.Item.ANY, ATriggerPredicate.Entity.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player throws an item and another entity picks it up.
+     * @param item The item predicate for the item that was thrown.
+     * @return Thrown Item Picked Up By Entity Trigger
+     */
+    @NotNull
+    public static ATrigger thrownItemPickedUpByEntity(@Nullable ATriggerPredicate.Item item) {
+        return thrownItemPickedUpByEntity(item, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -864,7 +1010,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger thrownItemPickedUpByEntity(@Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Entity entity) {
-        return new ATrigger("thrown_item_picked_up_by_entity", Map.of("item", item, "entity", entity));
+        return new ATrigger("thrown_item_picked_up_by_entity", of("item", item, "entity", entity));
     }
 
     /**
@@ -873,7 +1019,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger thrownItemPickedUpByPlayer() {
-        return thrownItemPickedUpByPlayer(null, null);
+        return thrownItemPickedUpByPlayer(ATriggerPredicate.Item.ANY, ATriggerPredicate.Entity.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player picks up an item thrown by another entity.
+     * @param item The item predicate for the item that was thrown.
+     * @return Thrown Item Picked Up By Player Trigger
+     */
+    @NotNull
+    public static ATrigger thrownItemPickedUpByPlayer(@Nullable ATriggerPredicate.Item item) {
+        return thrownItemPickedUpByPlayer(item, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -884,7 +1040,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger thrownItemPickedUpByPlayer(@Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Entity entity) {
-        return new ATrigger("thrown_item_picked_up_by_player", Map.of("item", item, "entity", entity));
+        return new ATrigger("thrown_item_picked_up_by_player", of("item", item, "entity", entity));
     }
 
     /**
@@ -902,7 +1058,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usedEnderEye() {
-        return usedEnderEye(null);
+        return usedEnderEye(Range.ANY);
     }
 
     /**
@@ -912,7 +1068,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usedEnderEye(@Nullable Range distance) {
-        return new ATrigger("used_ender_eye", Map.of("distance", distance));
+        return new ATrigger("used_ender_eye", of("distance", distance));
     }
 
     /**
@@ -921,7 +1077,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usedTotem() {
-        return usedTotem(null);
+        return usedTotem(ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -931,7 +1087,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usedTotem(@Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("used_totem", Map.of("item", item));
+        return new ATrigger("used_totem", of("item", item));
     }
 
     /**
@@ -940,7 +1096,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usingItem() {
-        return usingItem(null);
+        return usingItem(ATriggerPredicate.Item.ANY);
     }
 
     /**
@@ -950,7 +1106,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger usingItem(@Nullable ATriggerPredicate.Item item) {
-        return new ATrigger("using_item", Map.of("item", item));
+        return new ATrigger("using_item", of("item", item));
     }
 
     /**
@@ -959,7 +1115,17 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger villagerTrade() {
-        return villagerTrade(null, null);
+        return villagerTrade(ATriggerPredicate.Item.ANY, ATriggerPredicate.Entity.ANY);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player trades with a villager or wandering trader.
+     * @param item The item predicate for the item that was traded.
+     * @return Villager Trade Trigger
+     */
+    @NotNull
+    public static ATrigger villagerTrade(@Nullable ATriggerPredicate.Item item) {
+        return villagerTrade(item, ATriggerPredicate.Entity.ANY);
     }
 
     /**
@@ -970,7 +1136,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public static ATrigger villagerTrade(@Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Entity villager) {
-        return new ATrigger("villager_trade", Map.of("item", item, "villager", villager));
+        return new ATrigger("villager_trade", of("item", item, "villager", villager));
     }
 
     /**
@@ -1046,5 +1212,37 @@ public final class ATrigger implements Keyed {
                 "name='" + name + '\'' +
                 ", conditions=" + conditions +
                 '}';
+    }
+
+    // Map#of and ImmutableMap#of do not permit null values
+    
+    private static <K, V> Map<K, V> of(K k1, V v1) {
+        return new HashMap<>() {{
+            put(k1, v1);
+        }};
+    }
+    
+    private static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2) {
+        return new HashMap<>() {{
+            put(k1, v1);
+            put(k2, v2);
+        }};
+    }
+    
+    private static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        return new HashMap<>() {{
+            put(k1, v1);
+            put(k2, v2);
+            put(k3, v3);
+        }};
+    }
+
+    private static <K, V> Map<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+        return new HashMap<>() {{
+            put(k1, v1);
+            put(k2, v2);
+            put(k3, v3);
+            put(k4, v4);
+        }};
     }
 }
