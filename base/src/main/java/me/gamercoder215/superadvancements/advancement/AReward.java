@@ -1,9 +1,6 @@
 package me.gamercoder215.superadvancements.advancement;
 
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.NamespacedKey;
@@ -11,13 +8,20 @@ import org.bukkit.inventory.Recipe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.ImmutableSet;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A reward for an Advancement for a player upon Completion.
  */
 @SuppressWarnings("unchecked")
 public final class AReward {
+
+    /**
+     * Represents an empty Advancement Reward.
+     */
+    public static final AReward EMPTY = new AReward(0, ImmutableSet.of(), ImmutableSet.of());
 
     private int experience;
     private final Set<NamespacedKey> lootTables = new HashSet<>(); 
