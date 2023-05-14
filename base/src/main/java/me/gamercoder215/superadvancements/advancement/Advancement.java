@@ -1,19 +1,17 @@
 package me.gamercoder215.superadvancements.advancement;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
 import org.bukkit.Keyed;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
-import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents an abstract Advancement.
@@ -115,6 +113,15 @@ public final class Advancement implements Keyed {
     public void setFlags(@Nullable AFlag... flags) {
         this.flags.clear();
         if (flags != null) setFlags(ImmutableSet.copyOf(flags));
+    }
+
+    /**
+     * Fetches whether the Advancement has a flag.
+     * @param flag Flag to check
+     * @return true if Advancement has flag, false otherwise
+     */
+    public boolean hasFlag(@Nullable AFlag flag) {
+        return flag != null && flags.contains(flag);
     }
 
     /**
