@@ -131,8 +131,8 @@ public abstract class ADisplay {
 
     /**
      * Converts this Advancement Display to a String.
+     * <p>Note: This method should return a string in the format of: {@code "<title> - <description>"}</p>
      * @return String
-     * @implSpec This method should return a string in the format of: {@code "<title> - <description>"}
      */
     public abstract String toString();
 }

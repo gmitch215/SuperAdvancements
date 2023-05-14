@@ -93,6 +93,7 @@ public final class AReward {
     /**
      * <p>Fetches an immutable set of all of the loot tables that will be granted to the player upon completing the advancement.</p>
      * <p>Loot Tables were added in 1.13, hence using the keys of them instead.</p>
+     * @return Loot Tables to grant the player
      */
     @NotNull
     public Set<NamespacedKey> getLootTables() {

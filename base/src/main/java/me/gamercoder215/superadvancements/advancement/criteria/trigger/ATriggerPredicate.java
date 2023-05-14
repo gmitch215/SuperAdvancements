@@ -33,6 +33,10 @@ public interface ATriggerPredicate<T extends ATriggerPredicate<T>> {
 
     boolean equals(Object obj);
 
+    /**
+     * Fetches the class that represents this predicate.
+     * @return Predicate Class
+     */
     Class<T> getPredicateClass();
 
     /**
