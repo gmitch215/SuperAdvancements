@@ -1,21 +1,13 @@
 package me.gamercoder215.superadvancements.advancement.criteria;
 
-import java.util.Date;
-
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Date;
 
 /**
  * Represents progress for a specific {@link ACriteria}.
  */
 public interface ACriteriaProgress {
-
-    /**
-     * Fetches the criteria this progress belongs to.
-     * @return Criteria
-     */
-    @NotNull
-    ACriteria getCriteria();
     
     /**
      * Fetches the date this criteria was obtained.
