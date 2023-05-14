@@ -13,6 +13,7 @@ public abstract class ADisplay {
     private AVisibility visibility;
     private String backgroundTexture;
     private float x, y = 0;
+    private AFrame frame;
 
     /**
      * Creates a new Advancement Display.
@@ -109,5 +110,29 @@ public abstract class ADisplay {
         this.y = y;
     }
 
+    /**
+     * Gets the Frame type of the Advancement.
+     * @return Frame Type
+     */
+    @NotNull
+    public AFrame getFrame() {
+        return frame;
+    }
+
+    /**
+     * Sets the Frame type of the Advancement.
+     * @param frame Frame Type
+     * @throws IllegalArgumentException If the frame is null
+     */
+    public void setFrame(@NotNull AFrame frame) throws IllegalArgumentException {
+        if (frame == null) throw new IllegalArgumentException("Frame cannot be null!");
+        this.frame = frame;
+    }
+
+    /**
+     * Converts this Advancement Display to a String.
+     * @return String
+     * @implSpec This method should return a string in the format of: {@code "<title> - <description>"}
+     */
     public abstract String toString();
 }
