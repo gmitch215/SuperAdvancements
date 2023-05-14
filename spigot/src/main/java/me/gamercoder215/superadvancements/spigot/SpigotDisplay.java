@@ -1,6 +1,7 @@
 package me.gamercoder215.superadvancements.spigot;
 
 import me.gamercoder215.superadvancements.advancement.ADisplay;
+import me.gamercoder215.superadvancements.advancement.AFrame;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,15 @@ public final class SpigotDisplay extends ADisplay {
 
     private BaseComponent title;
     private BaseComponent description;
+
+    /**
+     * Constructs a new Spigot Advancement Display.
+     * @param frame Frame Type
+     */
+    public SpigotDisplay(@NotNull AFrame frame) {
+        super();
+        setFrame(frame);
+    }
 
     /**
      * Gets the title of the Advancement.
@@ -51,6 +61,6 @@ public final class SpigotDisplay extends ADisplay {
 
     @Override
     public String toString() {
-        return getTitle().toPlainText() + " - " + getDescription().toPlainText();
+        return getTitle().toPlainText() + " - " + (getDescription() == null ? "" : getDescription().toPlainText());
     }
 }

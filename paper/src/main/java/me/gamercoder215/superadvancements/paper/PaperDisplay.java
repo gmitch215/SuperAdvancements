@@ -1,6 +1,7 @@
 package me.gamercoder215.superadvancements.paper;
 
 import me.gamercoder215.superadvancements.advancement.ADisplay;
+import me.gamercoder215.superadvancements.advancement.AFrame;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,15 @@ public final class PaperDisplay extends ADisplay {
 
     private Component title;
     private Component description;
+
+    /**
+     * Constructs a new Paper Advancement Display.
+     * @param frame Frame Type
+     */
+    public PaperDisplay(@NotNull AFrame frame) {
+        super();
+        setFrame(frame);
+    }
 
     /**
      * Fetches the title of the Advancement.
@@ -51,6 +61,6 @@ public final class PaperDisplay extends ADisplay {
 
     @Override
     public String toString() {
-        return getTitle() + " - " + getDescription();
+        return getTitle() + " - " + (getDescription() == null ? "" : getDescription());
     }
 }

@@ -1,6 +1,7 @@
 package me.gamercoder215.superadvancements.spigot;
 
 import me.gamercoder215.superadvancements.advancement.ADisplay;
+import me.gamercoder215.superadvancements.advancement.AFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,15 @@ public final class BukkitDisplay extends ADisplay {
 
     private String title;
     private String description;
+
+    /**
+     * Constructs a new Bukkit Advancement Display.
+     * @param frame Frame Type
+     */
+    public BukkitDisplay(@NotNull AFrame frame) {
+        super();
+        setFrame(frame);
+    }
 
     /**
      * Gets the title of the Advancement.
@@ -50,6 +60,6 @@ public final class BukkitDisplay extends ADisplay {
 
     @Override
     public String toString() {
-        return getTitle() + " - " + getDescription();
+        return getTitle() + " - " + (getDescription() == null ? "" : getDescription());
     }
 }
