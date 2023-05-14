@@ -20,8 +20,9 @@ public enum AFlag {
      */
     MESSAGE,
 
-
-
-    ;
+    /**
+     * The advancement only needs one of the criteria to be completed.
+     */
+    ONLY_ONE_CRITERIA
 
 }
