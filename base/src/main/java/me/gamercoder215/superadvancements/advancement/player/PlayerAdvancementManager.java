@@ -1,12 +1,13 @@
 package me.gamercoder215.superadvancements.advancement.player;
 
+import com.google.common.collect.ImmutableList;
+import me.gamercoder215.superadvancements.advancement.AProgress;
+import me.gamercoder215.superadvancements.advancement.Advancement;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import com.google.common.collect.ImmutableList;
-
-import me.gamercoder215.superadvancements.advancement.Advancement;
+import java.util.stream.Collectors;
 
 /**
  * Represents a player's Advancement manager.
@@ -41,11 +42,37 @@ public interface PlayerAdvancementManager {
     }
 
     /**
+     * Removes advancements from this Advancement Manager.
+     * @param advancements Keys of Advancements to remove
+     */
+    void removeAdvancement(@NotNull Iterable<? extends NamespacedKey> advancements);
+
+    /**
+     * Removes advancements from this Advancement Manager.
+     * @param advancements Keys of Advancements to remove
+     */
+    default void removeAdvancement(@NotNull NamespacedKey... advancements) {
+        if (advancements == null || advancements.length == 0) return;
+        removeAdvancement(ImmutableList.copyOf(advancements));
+    }
+
+    /**
+     * Removes advancements from this Advancement Manager.
+     * @param advancements Keys of Advancements to remove
+     */
+    default void removeAdvancement(@NotNull Advancement... advancements) {
+        if (advancements == null || advancements.length == 0) return;
+        removeAdvancement(ImmutableList.copyOf(advancements).stream().map(Advancement::getKey).collect(Collectors.toList()));
+    }
+
+    /**
      * Grants the Advancement to the player.
      * @param advancement Key of the Advancement to grant
      * @return true if the Advancement was granted, false if the Advancement was already granted
      */
-    boolean grant(@NotNull NamespacedKey advancement);
+    default boolean grant(@NotNull NamespacedKey advancement) {
+        return getProgress(advancement).grant();
+    }
 
     /**
      * Grants the Advancement to the player.
@@ -61,7 +88,9 @@ public interface PlayerAdvancementManager {
      * @param advancement Key of the Advancement to revoke
      * @return true if the Advancement was revoked, false if the Advancement was already revoked
      */
-    boolean revoke(@NotNull NamespacedKey advancement);
+    default boolean revoke(@NotNull NamespacedKey advancement) {
+        return getProgress(advancement).revoke();
+    }
 
     /**
      * Revokes the Advancement from the player.
@@ -70,6 +99,24 @@ public interface PlayerAdvancementManager {
      */
     default boolean revoke(@NotNull Advancement advancement) {
         return revoke(advancement.getKey());
+    }
+
+    /**
+     * Fetches the progress of the Advancement.
+     * @param key Key of the Advancement
+     * @return Progress of the Advancement
+     */
+    @NotNull
+    AProgress getProgress(@NotNull NamespacedKey key);
+
+    /**
+     * Fetches the progress of the Advancement.
+     * @param advancement Advancement to fetch
+     * @return Progress of the Advancement
+     */
+    @NotNull
+    default AProgress getProgress(@NotNull Advancement advancement) {
+        return getProgress(advancement.getKey());
     }
 
 }
