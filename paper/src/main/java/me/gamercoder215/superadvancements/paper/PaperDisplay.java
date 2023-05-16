@@ -60,7 +60,12 @@ public final class PaperDisplay extends ADisplay {
     }
 
     @Override
-    public String toString() {
-        return getTitle() + " - " + (getDescription() == null ? "" : getDescription());
+    public String getTitleAsString() {
+        return getTitle().toString();
+    }
+
+    @Override
+    public String getDescriptionAsString() {
+        return getDescription() == null ? "" : getDescription().toString();
     }
 }

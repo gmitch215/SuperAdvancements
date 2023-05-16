@@ -59,7 +59,12 @@ public final class BukkitDisplay extends ADisplay {
     }
 
     @Override
-    public String toString() {
-        return getTitle() + " - " + (getDescription() == null ? "" : getDescription());
+    public String getTitleAsString() {
+        return title;
+    }
+
+    @Override
+    public String getDescriptionAsString() {
+        return description;
     }
 }

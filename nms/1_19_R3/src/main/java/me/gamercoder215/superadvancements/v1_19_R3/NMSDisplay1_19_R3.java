@@ -24,7 +24,12 @@ final class NMSDisplay1_19_R3 extends ADisplay {
 
 
     @Override
-    public String toString() {
-        return handle.getTitle().getString() + " - " + handle.getDescription().getString();
+    public String getTitleAsString() {
+        return handle.getTitle().getString();
+    }
+
+    @Override
+    public String getDescriptionAsString() {
+        return handle.getDescription().getString();
     }
 }

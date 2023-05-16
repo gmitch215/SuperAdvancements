@@ -130,9 +130,16 @@ public abstract class ADisplay {
     }
 
     /**
-     * Converts this Advancement Display to a String.
-     * <p>Note: This method should return a string in the format of: {@code "<title> - <description>"}</p>
-     * @return String
+     * Converts this Advancement Display's Title to a String.
+     * @return Title String
      */
-    public abstract String toString();
+    @NotNull
+    public abstract String getTitleAsString();
+
+    /**
+     * Converts this Advancement Display's Description to a String.
+     * @return Description String, or blank if no description
+     */
+    @NotNull
+    public abstract String getDescriptionAsString();
 }

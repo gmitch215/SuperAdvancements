@@ -60,7 +60,12 @@ public final class SpigotDisplay extends ADisplay {
     }
 
     @Override
-    public String toString() {
-        return getTitle().toPlainText() + " - " + (getDescription() == null ? "" : getDescription().toPlainText());
+    public String getTitleAsString() {
+        return getTitle().toPlainText();
+    }
+
+    @Override
+    public String getDescriptionAsString() {
+        return getDescription() == null ? "" : getDescription().toPlainText();
     }
 }
