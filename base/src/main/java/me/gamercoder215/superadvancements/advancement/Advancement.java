@@ -45,6 +45,19 @@ public final class Advancement implements Keyed {
     }
 
     /**
+     * Fetches the Root Advancement that this Advancement is or extends from.
+     * @return Root Advancement
+     */
+    @NotNull
+    public Advancement getRoot() {
+        Advancement root = this;
+        while (root.getParent() != null)
+            root = root.getParent();
+
+        return root;
+    }
+
+    /**
      * Fetches the Advancement's display.
      * @return Advancement Display
      */
