@@ -12,6 +12,8 @@ import net.minecraft.advancements.*;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.advancements.critereon.EntityPredicate.Composite;
 import net.minecraft.commands.CommandFunction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -20,21 +22,33 @@ import net.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ServerAdvancementManager;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.storage.loot.PredicateManager;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
+
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
+import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlockState;
+import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlockStates;
 import org.bukkit.craftbukkit.v1_19_R3.enchantments.CraftEnchantment;
 import org.bukkit.craftbukkit.v1_19_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R3.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_19_R3.potion.CraftPotionUtil;
 import org.bukkit.craftbukkit.v1_19_R3.util.CraftNamespacedKey;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -42,23 +56,47 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionType;
 
+import com.google.common.collect.ImmutableMap;
+import com.mojang.serialization.Decoder;
+import com.mojang.serialization.Encoder;
+import com.mojang.serialization.MapCodec;
+
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public final class Wrapper1_19_R3 implements Wrapper {
 
-    private static final ServerAdvancementManager manager = ((CraftServer) Bukkit.getServer()).getServer().getAdvancements();
+    static {
+        CraftServer server = (CraftServer) Bukkit.getServer();
+        if (server != null) 
+            manager = server.getServer().getAdvancements();
+        else
+            manager = new ServerAdvancementManager(new PredicateManager());
+    }
+
+    private static final ServerAdvancementManager manager;
 
     public static MinMaxBounds.Ints toIntRange(Range r) {
-        if (r == null || r == Range.ANY) return MinMaxBounds.Ints.ANY;
+        if (r == null) return MinMaxBounds.Ints.ANY;
         return MinMaxBounds.Ints.between((int) r.getMinimum(), (int) r.getMaximum());
     }
 
     public static MinMaxBounds.Doubles toDoubleRange(Range r) {
-        if (r == null || r == Range.ANY) return MinMaxBounds.Doubles.ANY;
+        if (r == null) return MinMaxBounds.Doubles.ANY;
         return MinMaxBounds.Doubles.between(r.getMinimum(), r.getMaximum());
+    }
+
+    public static Range fromNMS(MinMaxBounds.Doubles r) {
+        if (r == null) return Range.ANY;
+        return new Range(r.getMin(), r.getMax());
+    }
+
+    public static Range fromNMS(MinMaxBounds.Ints r) {
+        if (r == null) return Range.ANY;
+        return new Range(r.getMin(), r.getMax());
     }
 
     public static ServerPlayer toNMS(Player p) {
@@ -123,6 +161,11 @@ public final class Wrapper1_19_R3 implements Wrapper {
     public static TagKey<DamageType> toNMS(DamageTag tag) {
         if (tag == null) return null;
         return TagKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(tag.getKey().getKey()));
+    }
+
+    public static <T> MappedRegistry<T> getRegistry(ResourceKey<Registry<T>> key) {
+        DedicatedServer server = ((CraftServer) Bukkit.getServer()).getServer();
+        return (MappedRegistry<T>) server.registryAccess().registryOrThrow(key);
     }
 
     public static <T> ResourceKey<T> getKey(Keyed keyed, ResourceKey<Registry<T>> registry) {
@@ -498,13 +541,212 @@ public final class Wrapper1_19_R3 implements Wrapper {
         };
     }
 
-    public static ATrigger fromNMS(CriterionTriggerInstance trigger) {
-        if (trigger == null) return null;
 
-        // TODO Finish
-        return switch (trigger.getCriterion().getPath()) {
+    public static float getFloat(Object o, String name) { return getObject(o, name, Float.class); }
+
+    public static double getDouble(Object o, String name) {
+        return getObject(o, name, Double.class);
+    }
+
+    public static boolean getBoolean(Object o, String name) {
+        return getObject(o, name, Boolean.class);
+    }
+
+    public static int getInt(Object o, String name) {
+        return getObject(o, name, Integer.class);
+    }
+
+    public static <T> T getObject(Object o, String name, Class<T> cast) {
+        try {
+            Class<?> clazz = o.getClass();
+
+            while (clazz.getSuperclass() != null) {
+                try {
+                    Field f = clazz.getDeclaredField(name);
+                    f.setAccessible(true);
+                    return cast.cast(f.get(o));
+                } catch (NoSuchFieldException | ClassCastException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
+    }
+
+    public static ATrigger fromNMS(CriterionTriggerInstance t) {
+        if (t == null) return null;
+
+        return switch (t.getCriterion().getPath()) {
             case "impossible" -> ATrigger.impossible();
-            default -> throw new IllegalArgumentException("Unknown Advancement Trigger: " + trigger.getCriterion());
+            case "allay_drop_item_on_block" -> ATrigger.allayDropItemOnBlock(
+                fromNMS(getObject(t, "a", LocationPredicate.class)),
+                fromNMS(getObject(t, "b", ItemPredicate.class))
+            );
+            case "avoid_vibration" -> ATrigger.avoidVibration();
+            case "bee_nest_destroyed" -> ATrigger.beeNestDestroyed(
+                fromNMS(getObject(t, "a", Block.class)),
+                fromNMS(getObject(t, "b", ItemPredicate.class)),
+                fromNMS(getObject(t, "c", MinMaxBounds.Ints.class))
+            );
+            case "bred_animals" -> ATrigger.bredAnimals(
+                fromNMS(getObject(t, "c", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "brewed_potion" -> ATrigger.brewedPotion(
+                fromNMS(getObject(t, "a", Potion.class))
+            );
+            case "changed_dimension" -> ATrigger.changedDimension(
+                fromNMSW(getObject(t, "a", ResourceKey.class)),
+                fromNMSW(getObject(t, "b", ResourceKey.class))
+            );
+            case "channeled_lightning" -> ATrigger.channeledLightning(
+                Arrays.stream(getObject(t, "a", EntityPredicate.Composite[].class))
+                        .map(Wrapper1_19_R3::fromNMS)
+                        .collect(Collectors.toSet())
+            );
+            case "construct_beacon" -> ATrigger.constructBeacon(
+                fromNMS(getObject(t, "a", MinMaxBounds.Ints.class))
+            );
+            case "consume_item" -> ATrigger.consumeItem(
+                fromNMS(getObject(t, "a", ItemPredicate.class))
+            );
+            case "cured_zombie_villager" -> ATrigger.curedZombieVillager(
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "enchanted_item" -> ATrigger.enchantedItem(
+                fromNMS(getObject(t, "a", ItemPredicate.class)),
+                fromNMS(getObject(t, "b", MinMaxBounds.Ints.class))
+            );
+            case "enter_block" -> ATrigger.enterBlock(
+                fromNMS(getObject(t, "a", Block.class)),
+                fromNMS(getObject(t, "a", Block.class), getObject(t, "b", StatePropertiesPredicate.class))
+            );
+            case "entity_hurt_player" -> ATrigger.entityHurtPlayer(
+                fromNMS(getObject(t, "a", DamagePredicate.class))
+            );
+            case "entity_killed_player" -> ATrigger.entityKilledPlayer(
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "b", DamageSourcePredicate.class))
+            );
+            case "fall_from_height" -> ATrigger.fallFromHeight(
+                fromNMS(getObject(t, "b", DistancePredicate.class)),
+                fromNMS(getObject(t, "a", LocationPredicate.class))
+            );
+            case "fishing_rod_hooked" -> ATrigger.fishingRodHooked(
+                fromNMS(getObject(t, "a", ItemPredicate.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.class)),
+                fromNMS(getObject(t, "c", ItemPredicate.class))
+            );
+            case "hero_of_the_village" -> ATrigger.heroOfTheVillage();
+            case "inventory_changed" -> ATrigger.inventoryChanged(
+                fromNMS(getObject(t, "c", MinMaxBounds.Ints.class)),
+                fromNMS(getObject(t, "b", MinMaxBounds.Ints.class)),
+                fromNMS(getObject(t, "a", MinMaxBounds.Ints.class)),
+                Arrays.stream(getObject(t, "d", ItemPredicate[].class))
+                        .map(Wrapper1_19_R3::fromNMS)
+                        .collect(Collectors.toSet())
+            );
+            case "item_durability_changed" -> ATrigger.itemDurabilityChanged(
+                fromNMS(getObject(t, "a", ItemPredicate.class)),
+                fromNMS(getObject(t, "c", MinMaxBounds.Ints.class)),
+                fromNMS(getObject(t, "b", MinMaxBounds.Ints.class))
+            );
+            case "item_used_on_block" -> ATrigger.itemUsedOnBlock(
+                fromNMS(getObject(t, "a", LocationPredicate.class)),
+                fromNMS(getObject(t, "b", ItemPredicate.class))
+            );
+            case "kill_mob_near_sculk_catalyst" -> ATrigger.killMobNearSculkCatalyst(
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "b", DamageSourcePredicate.class))
+            );
+            case "killed_by_crossbow" -> ATrigger.killedByCrossbow(
+                fromNMS(getObject(t, "b", MinMaxBounds.Ints.class)),
+                Arrays.stream(getObject(t, "a", EntityPredicate.Composite[].class))
+                        .map(Wrapper1_19_R3::fromNMS)
+                        .collect(Collectors.toSet())
+            );
+            case "levitation" -> ATrigger.levitation(
+                fromNMS(getObject(t, "a", DistancePredicate.class)),
+                fromNMS(getObject(t, "b", MinMaxBounds.Ints.class))
+            );
+            case "location" -> ATrigger.location();
+            case "nether_travel" -> ATrigger.netherTravel(
+                fromNMS(getObject(t, "a", LocationPredicate.class)),
+                fromNMS(getObject(t, "b", DistancePredicate.class))
+            );
+            case "placed_block" -> ATrigger.placedBlock(
+                fromNMS(getObject(t, "a", Block.class)),
+                fromNMS(getObject(t, "d", ItemPredicate.class)),
+                fromNMS(getObject(t, "c", LocationPredicate.class)),
+                fromNMS(getObject(t, "a", Block.class), getObject(t, "b", StatePropertiesPredicate.class))
+            );
+            case "player_generates_container_loot" -> ATrigger.playerGeneratesContainerLoot(
+                fromNMS(getObject(t, "a", ResourceLocation.class))
+            );
+            case "player_hurt_entity" -> ATrigger.playerHurtEntity(
+                fromNMS(getObject(t, "a", DamagePredicate.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "player_interacted_with_entity" -> ATrigger.playerInteractedWithEntity(
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "a", ItemPredicate.class))
+            );
+            case "player_killed_entity" -> ATrigger.playerKilledEntity(
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class)),
+                fromNMS(getObject(t, "b", DamageSourcePredicate.class))
+            );
+            case "recipe_unlocked" -> ATrigger.recipeUnlocked(
+                fromNMS(getObject(t, "a", ResourceLocation.class))
+            );
+            case "ride_entity_in_lava" -> ATrigger.rideEntityInLava(
+                fromNMS(getObject(t, "a", LocationPredicate.class)),
+                fromNMS(getObject(t, "b", DistancePredicate.class))
+            );
+            case "shot_crossbow" -> ATrigger.shotCrossbow(
+                fromNMS(getObject(t, "a", ItemPredicate.class))
+            );
+            case "slept_in_bed" -> ATrigger.sleptInBed();
+            case "slide_down_block" -> ATrigger.slideDownBlock(
+                fromNMS(getObject(t, "a", Block.class)),
+                fromNMS(getObject(t, "a", Block.class), getObject(t, "b", StatePropertiesPredicate.class))
+            );
+            case "started_riding" -> ATrigger.startedRiding();
+            case "tame_animal" -> ATrigger.tameAnimal(
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class))
+            );
+            case "target_hit" -> ATrigger.targetHit(
+                fromNMS(getObject(t, "a", MinMaxBounds.Ints.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "thrown_item_picked_up_by_entity" -> ATrigger.thrownItemPickedUpByEntity(
+                fromNMS(getObject(t, "a", ItemPredicate.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "thrown_item_picked_up_by_player" -> ATrigger.thrownItemPickedUpByPlayer(
+                fromNMS(getObject(t, "a", ItemPredicate.class)),
+                fromNMS(getObject(t, "b", EntityPredicate.Composite.class))
+            );
+            case "tick" -> ATrigger.tick();
+            case "used_ender_eye" -> ATrigger.usedEnderEye(
+                fromNMS(getObject(t, "a", MinMaxBounds.Doubles.class))
+            );
+            case "used_totem" -> ATrigger.usedTotem(
+                fromNMS(getObject(t, "a", ItemPredicate.class))
+            );
+            case "using_item" -> ATrigger.usingItem(
+                fromNMS(getObject(t, "a", ItemPredicate.class))
+            );
+            case "villager_trade" -> ATrigger.villagerTrade(
+                fromNMS(getObject(t, "b", ItemPredicate.class)),
+                fromNMS(getObject(t, "a", EntityPredicate.Composite.class))
+            );
+            case "voluntary_exile" -> ATrigger.voluntaryExile();
+            default -> throw new IllegalArgumentException("Unknown Advancement Trigger: " + t.getCriterion());
         };
     }
 
@@ -529,11 +771,12 @@ public final class Wrapper1_19_R3 implements Wrapper {
     }
 
     public static net.minecraft.advancements.Advancement toNMS(Advancement a) {
+        if (a == null) return null;
         if (manager.advancements.get(toNMS(a.getKey())) != null) return manager.advancements.get(toNMS(a.getKey()));
 
         ADisplay display = a.getDisplay();
-        String title = display.toString().split("-")[0].trim();
-        String desc = display.toString().split("-")[1].substring(1).trim();
+        String title = display.getTitleAsString();
+        String desc = display.getDescriptionAsString();
         FrameType frame = Arrays.stream(FrameType.values()).filter(f -> f.getName().equalsIgnoreCase(display.getFrame().name())).findFirst().orElse(FrameType.TASK);
 
         ResourceLocation bg = display.getBackgroundTexture() == null ? null : new ResourceLocation(display.getBackgroundTexture());
@@ -559,7 +802,260 @@ public final class Wrapper1_19_R3 implements Wrapper {
     }
 
     public static NamespacedKey fromNMS(ResourceLocation key) {
+        if (key == null) return null;
         return CraftNamespacedKey.fromMinecraft(key);
+    }
+
+    public static Biome fromNMS(ResourceKey<net.minecraft.world.level.biome.Biome> biome) {
+        if (biome == null) return null;
+        MappedRegistry<net.minecraft.world.level.biome.Biome> registry = getRegistry(Registries.BIOME);
+        return CraftBlock.biomeBaseToBiome(registry, registry.getHolderOrThrow(biome));
+    }
+
+    public static World fromNMSW(ResourceKey<net.minecraft.world.level.Level> world) {
+        if (world == null) return null;
+        MappedRegistry<net.minecraft.world.level.Level> registry = getRegistry(Registries.DIMENSION);
+        return registry.getOrThrow(world).getWorld();
+    }
+
+    public static Material fromNMS(Block block) {
+        if (block == null) return null;
+        return CraftMagicNumbers.getMaterial(block);
+    }
+
+    public static EntityType fromNMS(EntityTypePredicate p) {
+        if (p == null) return null;
+        try {
+            Field typeF = p.getClass().getDeclaredField("b");
+            typeF.setAccessible(true);
+
+            Class<?> typeC = typeF.getType();
+
+            if (net.minecraft.world.entity.EntityType.class.isAssignableFrom(typeC)) {
+                net.minecraft.world.entity.EntityType<?> entityType = (net.minecraft.world.entity.EntityType<?>) typeF.get(p);
+                return EntityType.valueOf(getRegistry(Registries.ENTITY_TYPE).getKey(entityType).getPath().toUpperCase());
+            } else if (TagKey.class.isAssignableFrom(typeC)) {
+                return null;
+            } else {
+                throw new IllegalArgumentException("Unknown EntityTypePredicate Field: " + typeC);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static DamageTag fromNMS(DamageSourcePredicate predicate) {
+        if (predicate == null) return null;
+        List<TagPredicate<DamageType>> tags = getObject(predicate, "b", List.class);
+
+        TagPredicate<DamageType> tP = tags.stream()
+                .filter(t -> getBoolean(t, "b"))
+                .findFirst()
+                .orElse(null);
+
+        if (tP == null) return null;
+
+        return fromNMS(getObject(tP, "a", TagKey.class));
+    }
+
+    public static Range fromNMS(DistancePredicate p) {
+        if (p == null) return null;
+        return fromNMS(getObject(p, "f", MinMaxBounds.Doubles.class));
+    }
+
+    public static DamageTag fromNMS(TagKey<DamageType> key) {
+        if (key == null) return null;
+        return DamageTag.valueOf(key.location().getPath().toUpperCase());
+    }
+
+    public static ItemStack fromNMS(Item item) {
+        if (item == null) return null;
+        return CraftItemStack.asBukkitCopy(new net.minecraft.world.item.ItemStack(item));
+    }
+
+    public static Enchantment fromNMS(net.minecraft.world.item.enchantment.Enchantment enchant) {
+        if (enchant == null) return null;
+        NamespacedKey key = fromNMS(BuiltInRegistries.ENCHANTMENT.getKey(enchant));
+        return CraftEnchantment.getByKey(key);
+    }
+
+    public static PotionType fromNMS(Potion potion) {
+        if (potion == null) return null;
+        ResourceLocation loc = BuiltInRegistries.POTION.getKey(potion);
+        return CraftPotionUtil.toBukkit(loc.getPath()).getType();
+    }
+
+    public static BlockState fromNMS(Block block, StatePropertiesPredicate predicate) {
+        if (predicate == null) return null;
+        List<Object> properties = getObject(predicate, "b", List.class);
+
+        try {
+            Class<?> propertyMatcherC = Class.forName("net.minecraft.advancements.critereon.StatePropertiesPredicate$PropertyMatcher");
+
+            Map<String, String> propertyMap = properties.stream()
+            .map(o -> {
+                try {
+                    Field nameF = propertyMatcherC.getDeclaredField("a");
+                    nameF.setAccessible(true);
+                    String name = (String) nameF.get(o);
+
+                    if (o.getClass().getDeclaredFields().length == 2) {
+                        // private class RangedPropertyMatcher
+                        Field minF = o.getClass().getDeclaredField("a");
+                        String min = String.valueOf(minF.get(o));
+                    
+                        return new AbstractMap.SimpleEntry<>(name, min);
+                    } else {
+                        // private class ExactPropertyMatcher
+                        Field valueF = o.getClass().getDeclaredField("a");
+                        valueF.setAccessible(true);
+                        String value = String.valueOf(valueF.get(o));
+
+                        return new AbstractMap.SimpleEntry<>(name, value);
+                    }
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException(e);
+                }
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            Map<Property<?>, Comparable<?>> prop = new HashMap<>();
+
+            for (Property<?> property : block.getStateDefinition().getProperties()) {
+                if (!propertyMap.containsKey(property.getName())) continue;
+
+                String valueS = propertyMap.get(property.getName());
+                if (valueS.equals("true") || valueS.equals("false"))
+                    prop.put(property, Boolean.parseBoolean(valueS));
+                else if (property.getClass().isEnum())
+                    prop.put(property, Enum.valueOf(property.getClass().asSubclass(Enum.class), valueS));
+                else if (property instanceof IntegerProperty)
+                    prop.put(property, Integer.parseInt(valueS));
+                else
+                    prop.put(property, valueS);
+            }
+
+            Supplier<net.minecraft.world.level.block.state.BlockState> supplier = block::defaultBlockState;
+
+            net.minecraft.world.level.block.state.BlockState nms = new net.minecraft.world.level.block.state.BlockState(
+                block, 
+                ImmutableMap.copyOf(prop),
+                MapCodec.of(Encoder.empty(), Decoder.unit(supplier))
+            );
+
+            return CraftBlockStates.getBlockState(BlockPos.ZERO, nms, null);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ATriggerPredicate.Entity fromNMS(EntityPredicate.Composite composite) {
+        if (composite == null) return null;
+        if (composite == EntityPredicate.Composite.ANY) return ATriggerPredicate.Entity.ANY;
+        
+        LootItemCondition[] conditions = getObject(composite, "b", LootItemCondition[].class);
+        return fromNMS(Arrays.stream(conditions)
+                .filter(c -> c instanceof LootItemEntityPropertyCondition)
+                .map(c -> getObject(c, "a", EntityPredicate.class))
+                .findFirst()
+                .orElse(null));
+    }
+
+    public static ATriggerPredicate.Damage fromNMS(DamagePredicate p) {
+        if (p == null) return null;
+        return ATriggerPredicate.Damage.builder()
+                .dealt(fromNMS(getObject(p, "b", MinMaxBounds.Doubles.class)))
+                .taken(fromNMS(getObject(p, "c", MinMaxBounds.Doubles.class)))
+                .source(fromNMS(getObject(p, "d", EntityPredicate.class)))
+                .build();
+    }
+
+    public static ATriggerPredicate.Entity fromNMS(EntityPredicate p) {
+        if (p == null) return null;
+        EntityFlagsPredicate flags = getObject(p, "h", EntityFlagsPredicate.class);
+        EntityEquipmentPredicate eq = getObject(p, "i", EntityEquipmentPredicate.class);
+
+        return ATriggerPredicate.Entity.builder()
+                .type(fromNMS(getObject(p, "b", EntityTypePredicate.class)))
+                .distanceToPlayer(fromNMS(getObject(p, "c", DistancePredicate.class)))
+                .location(fromNMS(getObject(p, "d", LocationPredicate.class)))
+                .steppingLocation(fromNMS(getObject(p, "e", LocationPredicate.class)))
+                // Flags
+                .onFire(getBoolean(flags, "b"))
+                .crouching(getBoolean(flags, "c"))
+                .sprinting(getBoolean(flags, "d"))
+                .swimming(getBoolean(flags, "e"))
+                .baby(getBoolean(flags, "f"))
+                // Equipment
+                .equipment(Map.of(
+                    EquipmentSlot.HEAD, fromNMS(getObject(eq, "c", ItemPredicate.class)),
+                    EquipmentSlot.CHEST, fromNMS(getObject(eq, "d", ItemPredicate.class)),
+                    EquipmentSlot.LEGS, fromNMS(getObject(eq, "e", ItemPredicate.class)),
+                    EquipmentSlot.FEET, fromNMS(getObject(eq, "f", ItemPredicate.class)),
+                    EquipmentSlot.HAND, fromNMS(getObject(eq, "g", ItemPredicate.class)),
+                    EquipmentSlot.OFF_HAND, fromNMS(getObject(eq, "h", ItemPredicate.class))
+                ))
+                // Other
+                .vehicle(fromNMS(getObject(p, "k", EntityPredicate.class)))
+                .passenger(fromNMS(getObject(p, "l", EntityPredicate.class)))
+                .target(fromNMS(getObject(p, "m", EntityPredicate.class)))
+                .build();
+    }
+
+    public static ATriggerPredicate.Enchantment fromNMS(EnchantmentPredicate p) {
+        if (p == null) return null;
+        return ATriggerPredicate.Enchantment.builder()
+                .enchantment(fromNMS(getObject(p, "b", net.minecraft.world.item.enchantment.Enchantment.class)))
+                .level(fromNMS(getObject(p, "c", MinMaxBounds.Ints.class)))
+                .build();
+    }
+
+    public static ATriggerPredicate.Item fromNMS(ItemPredicate p) {
+        if (p == null) return null;
+        ATriggerPredicate.Item.Builder builder = ATriggerPredicate.Item.builder()
+                .include(((Set<Item>) getObject(p, "c", Set.class))
+                        .stream()
+                        .map(Wrapper1_19_R3::fromNMS)
+                        .collect(Collectors.toSet())
+                )
+                .count(fromNMS(getObject(p, "d", MinMaxBounds.Ints.class)))
+                .durability(fromNMS(getObject(p, "e", MinMaxBounds.Ints.class)));
+
+        for (EnchantmentPredicate ench : getObject(p, "f", EnchantmentPredicate[].class))
+            builder.enchantment(fromNMS(ench));
+        
+        for (EnchantmentPredicate ench : getObject(p, "g", EnchantmentPredicate[].class))
+            builder.storedEnchantment(fromNMS(ench));
+
+        return builder.build();
+    }
+
+    public static ATriggerPredicate.Light fromNMS(LightPredicate p) {
+        if (p == null) return null;
+        return ATriggerPredicate.Light.of(fromNMS(getObject(p, "b", MinMaxBounds.Ints.class)));
+    }
+
+    public static ATriggerPredicate.Block fromNMS(BlockPredicate p) {
+        if (p == null) return null;
+        return ATriggerPredicate.Block.of(((Set<Block>) getObject(p, "c", Set.class))
+                .stream()
+                .map(Wrapper1_19_R3::fromNMS)
+                .collect(Collectors.toSet())
+        );
+    }
+
+    public static ATriggerPredicate.Location fromNMS(LocationPredicate p) {
+        if (p == null) return null;
+        return ATriggerPredicate.Location.builder()
+                .x(fromNMS(getObject(p, "c", MinMaxBounds.Doubles.class)))
+                .y(fromNMS(getObject(p, "d", MinMaxBounds.Doubles.class)))
+                .z(fromNMS(getObject(p, "e", MinMaxBounds.Doubles.class)))
+                .biome(fromNMS(getObject(p, "f", ResourceKey.class)))
+                .dimension(fromNMSW(getObject(p, "h", ResourceKey.class)))
+                .smokey(getBoolean(p, "i"))
+                .light(fromNMS(getObject(p, "j", LightPredicate.class)))
+                .block(fromNMS(getObject(p, "k", BlockPredicate.class)))
+                .build();
     }
 
     public static ACriteria fromNMS(Criterion c) {
