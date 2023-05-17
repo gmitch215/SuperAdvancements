@@ -106,6 +106,14 @@ public final class Range implements Predicate<Number> {
     }
 
     @Override
+    public String toString() {
+        return "Range{" +
+                "min=" + min +
+                ", max=" + max +
+                '}';
+    }
+
+    @Override
     public boolean test(@NotNull Number number) {
         return isWithinRange(number.doubleValue());
     }
