@@ -24,20 +24,21 @@ sonarqube {
     }
 }
 
+val jdProjects = listOf(
+    ":superadvancements",
+    ":superadvancements-spigot",
+    ":superadvancements-paper"
+)
+
 tasks {
     register("allJavadoc", Javadoc::class.java) {
-        val projects = listOf(
-            ":superadvancements",
-            ":superadvancements-spigot",
-            ":superadvancements-paper"
-        )
-        projects.forEach { dependsOn("$it:javadoc") }
+        jdProjects.forEach { dependsOn(project(it).tasks["javadoc"]) }
 
-        val sources: List<File> = projects.map { project(it).sourceSets["main"].allJava.srcDirs.toList() }.flatten()
-        setSource(sources)
+        enabled = true
+        title = "SuperAdvancements $version API"
 
-        classpath = files(projects.map { project(it).configurations["compileClasspath"] })
-        setDestinationDir(file("${project.buildDir}/javadoc"))
+        source = files(jdProjects.map { project(it).sourceSets["main"].allJava }).asFileTree
+        classpath = files(jdProjects.map { project(it).sourceSets["main"].compileClasspath })
 
         options {
             require(this is StandardJavadocDocletOptions)
@@ -45,7 +46,7 @@ tasks {
             title = "SuperAdvancements ${project.version} API"
             encoding = "UTF-8"
             overview = "base/src/main/javadoc/overview.html"
-            links("https://hub.spigotmc.org/javadocs/spigot/", "https://jd.papermc.io/paper/1.19/", "https://javadoc.io/doc/org.jetbrains/annotations/24.0.1/")
+            links("https://hub.spigotmc.org/javadocs/spigot/", "https://jd.advntr.dev/api/4.13.1/", "https://jd.papermc.io/paper/1.19/", "https://javadoc.io/doc/org.jetbrains/annotations/24.0.1/")
         }
     }
 }

@@ -6,7 +6,7 @@ if [ ! -d "docs" ]; then
   mkdir docs
 fi;
 
-cp -Rfv build/javadoc/* ./docs/
+cp -Rfv build/docs/javadoc/* ./docs/
 
 git checkout gh-pages
 
