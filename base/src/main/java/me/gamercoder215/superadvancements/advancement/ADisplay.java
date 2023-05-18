@@ -1,5 +1,6 @@
 package me.gamercoder215.superadvancements.advancement;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +72,23 @@ public abstract class ADisplay {
     /**
      * <p>Sets the background texture of the Advancement.</p>
      * <p>This should link to a file in one of the player's resource packs (or the Vanilla textures), such as:</p>
-     * <p>{@code setBackgroundTexture("textures/block/stone.png")}</p>
+     * <p>{@code setBackgroundTexture("textures/blocks/stone.png")}</p>
      * @param texture Texture String
      */
     public void setBackgroundTexture(@Nullable String texture) {
         this.backgroundTexture = texture;
+    }
+
+    /**
+     * <p>Sets the background texture of the Advancement.</p>
+     * <p>This sets the background texture to {@code textures/blocks/<material>.png} if {@link Material#isBlock()} returns true or {@code textures/items/<material>.png} if it returns false.</p>
+     * @param m Material to use
+     */
+    public void setBackgroundTexture(@Nullable Material m) {
+        if (m == null)
+            this.backgroundTexture = null;
+        else
+            this.backgroundTexture = "textures/" + (m.isBlock() ? "blocks" : "items") + "/" + m.name().toLowerCase() + ".png";
     }
 
     /**
