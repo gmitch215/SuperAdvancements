@@ -30,6 +30,10 @@ public interface Wrapper {
 
     AProgress getProgress(Player p, NamespacedKey key);
 
+    org.bukkit.advancement.Advancement toBukkit(Advancement a);
+
+    Advancement fromBukkit(org.bukkit.advancement.Advancement a);
+
     // Static Util
 
     static String getServerVersion() {

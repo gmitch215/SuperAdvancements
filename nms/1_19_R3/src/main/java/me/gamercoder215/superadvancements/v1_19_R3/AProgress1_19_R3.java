@@ -4,8 +4,7 @@ import me.gamercoder215.superadvancements.advancement.AProgress;
 import me.gamercoder215.superadvancements.advancement.criteria.ACriteriaProgress;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.CriterionProgress;
-import net.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static me.gamercoder215.superadvancements.v1_19_R3.Wrapper1_19_R3.toNMS;
@@ -23,15 +21,17 @@ final class AProgress1_19_R3 implements AProgress {
 
     private final Player p;
     private final ServerPlayer sp;
+    private final PlayerAdvancements manager;
 
-    private final ResourceLocation id;
+    private final net.minecraft.advancements.Advancement advancement;
     private final net.minecraft.advancements.AdvancementProgress handle;
 
-    AProgress1_19_R3(Player p, ResourceLocation id, net.minecraft.advancements.AdvancementProgress handle) {
+    AProgress1_19_R3(Player p, net.minecraft.advancements.Advancement advancement, net.minecraft.advancements.AdvancementProgress handle) {
         this.p = p;
         this.sp = toNMS(p);
+        this.manager = sp.getAdvancements();
 
-        this.id = id;
+        this.advancement = advancement;
         this.handle = handle;
     }
 
@@ -42,15 +42,21 @@ final class AProgress1_19_R3 implements AProgress {
 
     @Override
     public boolean grant() {
-        getRemainingCriteria().keySet().forEach(handle::grantProgress);
-        sp.connection.send(new ClientboundUpdateAdvancementsPacket(false, Set.of(), Set.of(), Map.of(id, handle)));
+        getRemainingCriteria().keySet().forEach(s ->
+            manager.award(advancement, s)
+        );
+        manager.flushDirty(sp);
+        manager.save();
         return true;
     }
 
     @Override
     public boolean revoke() {
-        getAwardedCriteria().keySet().forEach(handle::revokeProgress);
-        sp.connection.send(new ClientboundUpdateAdvancementsPacket(false, Set.of(), Set.of(), Map.of(id, handle)));
+        getAwardedCriteria().keySet().forEach(s ->
+            manager.revoke(advancement, s)
+        );
+        manager.flushDirty(sp);
+        manager.save();
         return true;
     }
 

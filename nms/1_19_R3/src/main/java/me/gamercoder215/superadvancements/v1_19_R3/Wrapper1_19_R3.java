@@ -40,6 +40,7 @@ import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
+import org.bukkit.craftbukkit.v1_19_R3.advancement.CraftAdvancement;
 import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlockState;
 import org.bukkit.craftbukkit.v1_19_R3.block.CraftBlockStates;
@@ -1113,12 +1114,7 @@ public final class Wrapper1_19_R3 implements Wrapper {
     @Override
     public void update(Player p) {
         ServerPlayer sp = ((CraftPlayer) p).getHandle();
-        Map<ResourceLocation, AdvancementProgress> progress = new HashMap<>();
-
-        for (net.minecraft.advancements.Advancement nms : manager.advancements.getAllAdvancements())
-            progress.put(nms.getId(), sp.getAdvancements().getOrStartProgress(nms));
-
-        sp.connection.send(new ClientboundUpdateAdvancementsPacket(false, Set.of(), Set.of(), progress));
+        sp.getAdvancements().flushDirty(sp);
     }
 
     @Override
@@ -1153,18 +1149,15 @@ public final class Wrapper1_19_R3 implements Wrapper {
     public void addAdvancement(Player p, Set<Advancement> advancements) {
         ServerPlayer sp = toNMS(p);
 
-        Map<ResourceLocation, net.minecraft.advancements.AdvancementProgress> progress = new HashMap<>();
-        Set<net.minecraft.advancements.Advancement> added = new HashSet<>();
-
         for (Advancement a : advancements) {
             net.minecraft.advancements.Advancement nms = toNMS(a);
             if (!isRegistered(a.getKey())) register(a);
-
-            added.add(nms);
-            progress.put(nms.getId(), sp.getAdvancements().getOrStartProgress(nms));
+            
+            sp.getAdvancements().getOrStartProgress(nms);
         }
 
-        sp.connection.send(new ClientboundUpdateAdvancementsPacket(false, added, Set.of(), progress));
+        sp.getAdvancements().flushDirty(sp);
+        sp.getAdvancements().save();
     }
 
     @Override
@@ -1179,6 +1172,19 @@ public final class Wrapper1_19_R3 implements Wrapper {
         ServerPlayer sp = toNMS(p);
         net.minecraft.advancements.Advancement nms = manager.advancements.get(toNMS(key));
 
-        return new AProgress1_19_R3(p, nms.getId(), sp.getAdvancements().getOrStartProgress(nms));
+        return new AProgress1_19_R3(p, nms, sp.getAdvancements().getOrStartProgress(nms));
+    }
+
+    @Override
+    public org.bukkit.advancement.Advancement toBukkit(Advancement a) {
+        if (a == null) throw new IllegalArgumentException("Advancement cannot be null");
+        return toNMS(a).bukkit;
+    }
+
+    @Override
+    public Advancement fromBukkit(org.bukkit.advancement.Advancement a) {
+        if (a == null) throw new IllegalArgumentException("Advancement cannot be null");
+
+        return fromNMS(((CraftAdvancement) a).getHandle());
     }
 }

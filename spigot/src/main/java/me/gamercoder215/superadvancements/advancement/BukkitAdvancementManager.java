@@ -105,6 +105,26 @@ public final class BukkitAdvancementManager implements PlayerAdvancementManager 
     }
 
     /**
+     * Converts a SuperAdvancements Advancement to a Bukkit Advancement.
+     * @param a Advancement to convert
+     * @return Bukkit Advancement
+     */
+    @NotNull
+    public static org.bukkit.advancement.Advancement toBukkit(@NotNull Advancement a) {
+        return w.toBukkit(a);
+    }
+
+    /**
+     * Converts a Bukkit Advancement to a SuperAdvancements Advancement.
+     * @param a Bukkit Advancement to convert
+     * @return SuperAdvancements Advancement
+     */
+    @NotNull
+    public static Advancement fromBukkit(@NotNull org.bukkit.advancement.Advancement a) {
+        return w.fromBukkit(a);
+    }
+
+    /**
      * Creates a new BukkitAdvancementManager.
      * @param p Player to create the manager for
      * @return BukkitAdvancementManager

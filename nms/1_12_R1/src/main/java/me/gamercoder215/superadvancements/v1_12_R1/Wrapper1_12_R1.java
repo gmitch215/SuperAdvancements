@@ -52,4 +52,16 @@ public final class Wrapper1_12_R1 implements Wrapper {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public org.bukkit.advancement.Advancement toBukkit(Advancement a) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Advancement fromBukkit(org.bukkit.advancement.Advancement a) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
