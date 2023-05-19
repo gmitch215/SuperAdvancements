@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ADisplay {
 
     private ItemStack icon;
-    private AVisibility visibility;
     private String backgroundTexture;
     private float x, y = 0;
     private AFrame frame;
@@ -38,25 +37,6 @@ public abstract class ADisplay {
     public void setIcon(@NotNull ItemStack icon) throws IllegalArgumentException {
         if (icon == null) throw new IllegalArgumentException("Icon cannot be null!");
         this.icon = icon;
-    }
-
-    /**
-     * Gets the visibility of the Advancement.
-     * @return Advancement Visibility
-     */
-    @NotNull
-    public AVisibility getVisibility() {
-        return visibility;
-    }
-
-    /**
-     * Sets the visibility of the Advancement.
-     * @param visibility Advancement Visibility
-     * @throws IllegalArgumentException If the visibility is null
-     */
-    public void setVisibility(@NotNull AVisibility visibility) throws IllegalArgumentException {
-        if (visibility == null) throw new IllegalArgumentException("Visibility cannot be null!");
-        this.visibility = visibility;
     }
 
     /**
