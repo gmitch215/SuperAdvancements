@@ -6,6 +6,7 @@ import me.gamercoder215.superadvancements.advancement.Advancement;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Collectors;
 
@@ -118,5 +119,19 @@ public interface PlayerAdvancementManager {
     default AProgress getProgress(@NotNull Advancement advancement) {
         return getProgress(advancement.getKey());
     }
+
+    /**
+     * Fetches the root advancement of the selected tab in the Advancement Screen.
+     * @return Root advancement of the Selected Tab, or null if no tab is selected
+     */
+    @Nullable
+    Advancement getSelectedTab();
+
+    /**
+     * <p>Sets the selected tab in the Advancement Screen.</p>
+     * <p>This method uses the Advancement's {@linkplain Advancement#getRoot() root advancement}.
+     * @param advancement Advancement to set as the selected tab
+     */
+    void setSelectedTab(@NotNull Advancement advancement);
 
 }

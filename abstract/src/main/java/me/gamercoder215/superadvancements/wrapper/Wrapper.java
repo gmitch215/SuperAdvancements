@@ -34,6 +34,10 @@ public interface Wrapper {
 
     Advancement fromBukkit(org.bukkit.advancement.Advancement a);
 
+    Advancement getSelectedTab(Player p);
+
+    void setSelectedTab(Player p, Advancement advancement);
+
     // Static Util
 
     static String getServerVersion() {

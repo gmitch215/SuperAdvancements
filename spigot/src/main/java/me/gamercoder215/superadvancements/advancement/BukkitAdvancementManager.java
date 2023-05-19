@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import static me.gamercoder215.superadvancements.wrapper.Wrapper.w;
 
 /**
- * Represents the Advancement Manager for Bukkit.
+ * Represents the implementation of the PlayerAdvancementManager.
  */
 public final class BukkitAdvancementManager implements PlayerAdvancementManager {
 
@@ -132,6 +132,16 @@ public final class BukkitAdvancementManager implements PlayerAdvancementManager 
     @NotNull
     public static BukkitAdvancementManager of(@NotNull Player p) {
         return new BukkitAdvancementManager(p);
+    }
+
+    @Override
+    public @Nullable Advancement getSelectedTab() {
+        return w.getSelectedTab(player);
+    }
+
+    @Override
+    public void setSelectedTab(@NotNull Advancement advancement) {
+        w.setSelectedTab(player, advancement);
     }
 
 }

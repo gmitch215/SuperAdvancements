@@ -760,10 +760,10 @@ public final class Wrapper1_19_R3 implements Wrapper {
         if (reward == null) return null;
         return new AdvancementRewards(
                 reward.getExperience(),
-                reward.getLootTables().stream()
+                reward.getLootTables() == null ? null : reward.getLootTables().stream()
                         .map(Wrapper1_19_R3::toNMS)
                         .toArray(ResourceLocation[]::new),
-                reward.getRecipes().stream()
+                reward.getRecipes() == null ? null : reward.getRecipes().stream()
                         .map(Keyed::getKey)
                         .map(Wrapper1_19_R3::toNMS)
                         .toArray(ResourceLocation[]::new),
@@ -1113,8 +1113,10 @@ public final class Wrapper1_19_R3 implements Wrapper {
 
     @Override
     public void update(Player p) {
-        ServerPlayer sp = ((CraftPlayer) p).getHandle();
+        ServerPlayer sp = toNMS(p);
+
         sp.getAdvancements().flushDirty(sp);
+        sp.getAdvancements().reload(manager);
     }
 
     @Override
@@ -1186,5 +1188,27 @@ public final class Wrapper1_19_R3 implements Wrapper {
         if (a == null) throw new IllegalArgumentException("Advancement cannot be null");
 
         return fromNMS(((CraftAdvancement) a).getHandle());
+    }
+
+    @Override
+    public Advancement getSelectedTab(Player p) {
+        ServerPlayer sp = toNMS(p);
+
+        net.minecraft.advancements.Advancement lastSelectedTab = getObject(sp.getAdvancements(), "l", net.minecraft.advancements.Advancement.class);
+        if (lastSelectedTab == null) return null;
+
+        return fromNMS(lastSelectedTab);
+    }
+
+    @Override
+    public void setSelectedTab(Player p, Advancement advancement) {
+        Advancement a0 = advancement.getRoot();
+        
+        if (!isRegistered(a0.getKey())) register(a0);
+        ServerPlayer sp = toNMS(p);
+
+        sp.getAdvancements().setSelectedTab(toNMS(a0));
+        sp.getAdvancements().flushDirty(sp);
+        sp.getAdvancements().save();
     }
 }

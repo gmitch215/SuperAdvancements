@@ -64,4 +64,15 @@ public final class Wrapper1_12_R1 implements Wrapper {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public Advancement getSelectedTab(Player p) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setSelectedTab(Player p, Advancement advancement) {
+        // TODO Auto-generated method stub
+    }
 }
