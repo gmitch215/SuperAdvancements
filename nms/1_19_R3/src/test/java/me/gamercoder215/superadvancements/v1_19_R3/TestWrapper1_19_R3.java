@@ -1,5 +1,7 @@
 package me.gamercoder215.superadvancements.v1_19_R3;
 
+import java.util.Set;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Biome;
 import org.junit.jupiter.api.Assertions;
@@ -7,10 +9,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import me.gamercoder215.superadvancements.advancement.AReward;
 import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATriggerPredicate;
 import me.gamercoder215.superadvancements.advancement.criteria.trigger.DamageTag;
 import me.gamercoder215.superadvancements.util.Range;
 import net.minecraft.SharedConstants;
+import net.minecraft.advancements.AdvancementRewards;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.Bootstrap;
 
@@ -54,6 +58,10 @@ public class TestWrapper1_19_R3 {
     private final String s = "test";
     private final int i = 3;
 
+    // Advancement Objects
+
+    private final AReward reward = new AReward(20, Set.of(NamespacedKey.minecraft("dummy")));
+
     @Test
     @DisplayName("Test Wrapper1_19_R3#getObject")
     public void testReflection() {
@@ -71,6 +79,8 @@ public class TestWrapper1_19_R3 {
         Assertions.assertNotNull(Wrapper1_19_R3.toNMS(loc));
         Assertions.assertNotNull(Wrapper1_19_R3.toNMS(entity));
         Assertions.assertNotNull(Wrapper1_19_R3.toNMS(damage));
+
+        Assertions.assertNotNull(Wrapper1_19_R3.toNMS(reward));
     }
 
     @Test
