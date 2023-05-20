@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord
+    url: https://discord.gg/WVFNWEvuqX
+    about: Report an issue on our official Discord!
+  - name: JitPack CI
+    url: https://jitci.com/gh/GamerCoder215/SuperAdvancements
+    about: View SuperAdvancements's Build Information.
+  - name: CodeMC CI
+    url: https://ci.codemc.io/job/GamerCoder215/job/SuperAdvancements/
+    about: View SuperAdvancements's Build Information.

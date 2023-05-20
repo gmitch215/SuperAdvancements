@@ -1,0 +1,68 @@
+name: Report a Bug
+description: Report a SuperAdvancements Bug.
+labels: ['unconfirmed bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a SuperAdvancements bug. Please take time to fill out the information below.
+  - type: dropdown
+    attributes:
+      label: Bug Type
+      description: What type of bug are you trying to report?
+      multiple: true
+      options:
+        - Performance
+        - Console Errors
+        - In-Game Errors
+        - Other Unexpected Behavior
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: SuperAdvancements Version
+      description: What version of SuperAdvancements are you using?
+      placeholder: |
+        Ex: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Server Version
+      description: What version of the server and MC are you using?
+      placeholder: |
+        Ex: "Paper 1.19.2"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Description
+      placeholder: |
+        Ex: "Advancement not displayed correctly"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: What you expect the plugin to do.
+      placeholder: |
+        Ex: "Advancement with color and icon displayed correctly"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual Behavior
+      description: What does the plugin do? What are the error messages shown?
+      placeholder: |
+        Ex: "Client cannot view custom advancement"
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        In the box below, you can attach any relevant info or files that may help us solve the bug.
+        If you think this issue is relevant to any other issues, please mention it here.
