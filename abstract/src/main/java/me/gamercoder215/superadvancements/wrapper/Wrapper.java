@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Constructor;
 import java.util.Set;
 
 public interface Wrapper {
@@ -47,10 +48,12 @@ public interface Wrapper {
     static Wrapper getWrapper() {
         String v = getServerVersion();
         try {
-            return Class.forName("me.gamercoder215.superadvancements.v" + v + ".Wrapper" + v)
+            Constructor<? extends Wrapper> constr = Class.forName("me.gamercoder215.superadvancements.v" + v + ".Wrapper" + v)
                 .asSubclass(Wrapper.class)
-                .getConstructor()
-                .newInstance();
+                .getDeclaredConstructor();
+
+            constr.setAccessible(true);
+            return constr.newInstance();
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Unknown Wrapper Version: " + v, e);
         }
