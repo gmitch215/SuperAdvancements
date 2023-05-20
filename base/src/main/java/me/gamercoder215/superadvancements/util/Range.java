@@ -2,13 +2,14 @@ package me.gamercoder215.superadvancements.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
  * Utility Class for a number range
  */
-public final class Range implements Predicate<Number> {
+public final class Range implements Predicate<Number>, Comparable<Range> {
 
     /**
      * Range of {@linkplain Double#NEGATIVE_INFINITY negative infinity} to {@linkplain Double#POSITIVE_INFINITY positive infinity}
@@ -113,6 +114,11 @@ public final class Range implements Predicate<Number> {
                 '}';
     }
 
+    /**
+     * Tests if a number is within the {@linkplain #getMinimum() minimum} and {@linkplain #getMaximum() maximum}.
+     * @param number the input argument
+     * @return true if the input argument matches the predicate, otherwise false
+     */
     @Override
     public boolean test(@NotNull Number number) {
         return isWithinRange(number.doubleValue());
@@ -191,4 +197,10 @@ public final class Range implements Predicate<Number> {
     	return new Range(min, max);
     }
 
+    @Override
+    public int compareTo(@NotNull Range o) {
+        return Comparator.comparingDouble(Range::getMinimum)
+                .thenComparing(Range::getMaximum)
+                .compare(this, o);
+    }
 }
