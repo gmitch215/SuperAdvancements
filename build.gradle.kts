@@ -84,7 +84,6 @@ allprojects {
 
                 pom {
                     description.set(project.description)
-                    name.set("SuperAdvancements")
 
                     licenses {
                         license {
@@ -177,6 +176,10 @@ subprojects {
                 html.required.set(true)
                 html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
             }
+        }
+
+        clean {
+            delete("$projectDir/logs", buildDir)
         }
 
         test {
