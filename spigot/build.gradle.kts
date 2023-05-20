@@ -34,7 +34,6 @@ description = "Bukkit & Spigot (String / BaseComponent) Implementation of the Su
 
 java {
     withJavadocJar()
-    withSourcesJar()
 }
 
 tasks {
@@ -44,7 +43,26 @@ tasks {
         exclude("**/abstract/**", "**/nms/**")
     }
 
+    register("sourcesJar", Jar::class.java) {
+        archiveClassifier.set("sources")
+
+        val sources = listOf(
+            sourceSets["main"].allSource,
+            project(":superadvancements").sourceSets["main"].allSource
+        )
+
+        from(sources)
+    }
+
     withType<ShadowJar> {
         dependsOn("sourcesJar", "javadocJar")
+    }
+}
+
+publishing {
+    publications {
+        getByName<MavenPublication>("maven") {
+            artifact(tasks["sourcesJar"])
+        }
     }
 }
