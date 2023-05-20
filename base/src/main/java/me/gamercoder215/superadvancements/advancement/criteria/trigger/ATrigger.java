@@ -376,6 +376,16 @@ public final class ATrigger implements Keyed {
     /**
      * Represents a trigger that occurs when a player dies to a living entity.
      * @param entity The entity that should kill the player.
+     * @return Entity Killed Player Trigger
+     */
+    @NotNull
+    public static ATrigger entityKilledPlayer(@Nullable ATriggerPredicate.Entity entity) {
+        return entityKilledPlayer(entity, null);
+    }
+
+    /**
+     * Represents a trigger that occurs when a player dies to a living entity.
+     * @param entity The entity that should kill the player.
      * @param killingBlow The damage tag that should be used to kill the player.
      * @return Entity Killed Player Trigger
      */
@@ -1190,6 +1200,7 @@ public final class ATrigger implements Keyed {
      */
     @NotNull
     public Map<String, Object> getConditions() {
+        if (conditions == null) return ImmutableMap.of();
         return ImmutableMap.copyOf(conditions);
     }
 
