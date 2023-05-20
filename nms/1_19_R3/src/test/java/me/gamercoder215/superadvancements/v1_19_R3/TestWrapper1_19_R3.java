@@ -1,7 +1,12 @@
 package me.gamercoder215.superadvancements.v1_19_R3;
 
-import java.util.Set;
-
+import me.gamercoder215.superadvancements.advancement.AReward;
+import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATriggerPredicate;
+import me.gamercoder215.superadvancements.advancement.criteria.trigger.DamageTag;
+import me.gamercoder215.superadvancements.util.Range;
+import net.minecraft.SharedConstants;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.Bootstrap;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Biome;
 import org.junit.jupiter.api.Assertions;
@@ -9,14 +14,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import me.gamercoder215.superadvancements.advancement.AReward;
-import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATriggerPredicate;
-import me.gamercoder215.superadvancements.advancement.criteria.trigger.DamageTag;
-import me.gamercoder215.superadvancements.util.Range;
-import net.minecraft.SharedConstants;
-import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.Bootstrap;
+import java.util.Set;
 
 @SuppressWarnings("unused")
 public class TestWrapper1_19_R3 {

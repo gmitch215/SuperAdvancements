@@ -15,9 +15,10 @@ final class NMSDisplay1_19_R3 extends ADisplay {
 
         this.setFrame(Arrays.stream(AFrame.values()).filter(f -> f.name().equalsIgnoreCase(handle.getFrame().getName())).findFirst().orElse(AFrame.TASK));
         this.setIcon(Wrapper1_19_R3.fromNMS(handle.getIcon()));
-        this.setBackgroundTexture(handle.getBackground().toString());
         this.setX(handle.getX());
         this.setY(handle.getY());
+
+        if (handle.getBackground() != null) this.setBackgroundTexture(handle.getBackground().toString());
     }
 
 

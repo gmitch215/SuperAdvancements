@@ -1,5 +1,9 @@
 package me.gamercoder215.superadvancements.v1_19_R3;
 
+import com.google.common.collect.ImmutableMap;
+import com.mojang.serialization.Decoder;
+import com.mojang.serialization.Encoder;
+import com.mojang.serialization.MapCodec;
 import me.gamercoder215.superadvancements.advancement.Advancement;
 import me.gamercoder215.superadvancements.advancement.*;
 import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
@@ -21,6 +25,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.ServerAdvancementManager;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,7 +40,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.storage.loot.PredicateManager;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
-
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
@@ -48,8 +52,8 @@ import org.bukkit.craftbukkit.v1_19_R3.enchantments.CraftEnchantment;
 import org.bukkit.craftbukkit.v1_19_R3.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R3.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_19_R3.potion.CraftPotionUtil;
-import org.bukkit.craftbukkit.v1_19_R3.util.CraftNamespacedKey;
 import org.bukkit.craftbukkit.v1_19_R3.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_19_R3.util.CraftNamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -57,18 +61,14 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionType;
 
-import com.google.common.collect.ImmutableMap;
-import com.mojang.serialization.Decoder;
-import com.mojang.serialization.Encoder;
-import com.mojang.serialization.MapCodec;
-
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public final class Wrapper1_19_R3 implements Wrapper {
+final class Wrapper1_19_R3 implements Wrapper {
 
     static {
         CraftServer server = (CraftServer) Bukkit.getServer();
@@ -757,7 +757,7 @@ public final class Wrapper1_19_R3 implements Wrapper {
     }
 
     public static AdvancementRewards toNMS(AReward reward) {
-        if (reward == null) return null;
+        if (reward == null) return AdvancementRewards.EMPTY;
         return new AdvancementRewards(
                 reward.getExperience(),
                 reward.getLootTables() == null ? null : reward.getLootTables().stream()
@@ -779,9 +779,12 @@ public final class Wrapper1_19_R3 implements Wrapper {
         String title = display.getTitleAsString();
         String desc = display.getDescriptionAsString();
         FrameType frame = Arrays.stream(FrameType.values()).filter(f -> f.getName().equalsIgnoreCase(display.getFrame().name())).findFirst().orElse(FrameType.TASK);
+        ResourceLocation bg = null;
 
-        ResourceLocation bg = display.getBackgroundTexture() == null ? null : new ResourceLocation(display.getBackgroundTexture());
-        DisplayInfo nmsDisplay = new DisplayInfo(toNMS(display.getIcon()), Component.literal(title), Component.literal(desc), bg, frame, a.hasFlag(AFlag.TOAST), a.hasFlag(AFlag.MESSAGE), a.hasFlag(AFlag.HIDDEN_TRUE));
+        if (a.getParent() == null && display.getBackgroundTexture() != null)
+            bg = new ResourceLocation(display.getBackgroundTexture());
+
+        DisplayInfo nmsDisplay = new DisplayInfo(toNMS(display.getIcon()), Component.literal(title), Component.literal(desc), bg, frame, a.hasFlag(AFlag.TOAST), a.hasFlag(AFlag.MESSAGE), a.hasFlag(AFlag.HIDDEN));
         nmsDisplay.setLocation(display.getX(), display.getY());
 
         net.minecraft.advancements.Advancement parent = a.getParent() == null ? null : toNMS(a.getParent());
@@ -793,7 +796,7 @@ public final class Wrapper1_19_R3 implements Wrapper {
                 toNMS(a.getReward()),
                 a.getCriteria().entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, e -> toNMS(e.getValue()))),
-                a.hasFlag(AFlag.ONLY_ONE_CRITERIA) ? RequirementsStrategy.OR.createRequirements(a.getCriteria().keySet()) : RequirementsStrategy.AND.createRequirements(a.getCriteria().keySet())
+                a.hasFlag(AFlag.MERGE_CRITERIA) ? RequirementsStrategy.OR.createRequirements(a.getCriteria().keySet()) : RequirementsStrategy.AND.createRequirements(a.getCriteria().keySet())
         );
     }
 
@@ -891,7 +894,7 @@ public final class Wrapper1_19_R3 implements Wrapper {
         List<Object> properties = getObject(predicate, "b", List.class);
 
         try {
-            Class<?> propertyMatcherC = Class.forName("net.minecraft.advancements.critereon.StatePropertiesPredicate$PropertyMatcher");
+            Class<?> propertyMatcherC = Class.forName("net.minecraft.advancements.critereon.CriterionTriggerProperties$c");
 
             Map<String, String> propertyMap = properties.stream()
             .map(o -> {
@@ -1101,10 +1104,10 @@ public final class Wrapper1_19_R3 implements Wrapper {
                 .criteria(criteria);
 
         if (a.getParent() != null) builder.parent(fromNMS(a.getParent()));
-        if (a.getRequirements().length == 1) builder.flags(AFlag.ONLY_ONE_CRITERIA);
+        if (a.getRequirements().length == 1) builder.flags(AFlag.MERGE_CRITERIA);
         if (a.getDisplay().shouldAnnounceChat()) builder.flags(AFlag.MESSAGE);
         if (a.getDisplay().shouldShowToast()) builder.flags(AFlag.TOAST);
-        if (a.getDisplay().isHidden()) builder.flags(AFlag.HIDDEN_TRUE);
+        if (a.getDisplay().isHidden()) builder.flags(AFlag.HIDDEN);
 
         return builder.build();
     }
@@ -1116,7 +1119,6 @@ public final class Wrapper1_19_R3 implements Wrapper {
         ServerPlayer sp = toNMS(p);
 
         sp.getAdvancements().flushDirty(sp);
-        sp.getAdvancements().reload(manager);
     }
 
     @Override
@@ -1151,13 +1153,27 @@ public final class Wrapper1_19_R3 implements Wrapper {
     public void addAdvancement(Player p, Set<Advancement> advancements) {
         ServerPlayer sp = toNMS(p);
 
+        Set<net.minecraft.advancements.Advancement> added = new HashSet<>();
+        Map<ResourceLocation, AdvancementProgress> map = new HashMap<>();
+
         for (Advancement a : advancements) {
             net.minecraft.advancements.Advancement nms = toNMS(a);
             if (!isRegistered(a.getKey())) register(a);
-            
-            sp.getAdvancements().getOrStartProgress(nms);
+
+            try {
+                Method regListeners = PlayerAdvancements.class.getDeclaredMethod("d", net.minecraft.advancements.Advancement.class);
+                regListeners.setAccessible(true);
+                regListeners.invoke(sp.getAdvancements(), nms);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+
+            AdvancementProgress prog = sp.getAdvancements().getOrStartProgress(nms);
+            added.add(nms);
+            map.put(nms.getId(), prog);
         }
 
+        sp.connection.send(new ClientboundUpdateAdvancementsPacket(false, added, Set.of(), map));
         sp.getAdvancements().flushDirty(sp);
         sp.getAdvancements().save();
     }
@@ -1171,6 +1187,7 @@ public final class Wrapper1_19_R3 implements Wrapper {
 
     @Override
     public AProgress getProgress(Player p, NamespacedKey key) {
+        if (!isRegistered(key)) throw new IllegalArgumentException("Advancement is not registered");
         ServerPlayer sp = toNMS(p);
         net.minecraft.advancements.Advancement nms = manager.advancements.get(toNMS(key));
 

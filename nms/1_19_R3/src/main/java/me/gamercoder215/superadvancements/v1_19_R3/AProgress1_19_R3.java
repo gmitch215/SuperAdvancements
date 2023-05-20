@@ -43,7 +43,7 @@ final class AProgress1_19_R3 implements AProgress {
     @Override
     public boolean grant() {
         getRemainingCriteria().keySet().forEach(s ->
-            manager.award(advancement, s)
+                manager.award(advancement, s)
         );
         manager.flushDirty(sp);
         manager.save();
@@ -53,7 +53,7 @@ final class AProgress1_19_R3 implements AProgress {
     @Override
     public boolean revoke() {
         getAwardedCriteria().keySet().forEach(s ->
-            manager.revoke(advancement, s)
+                manager.revoke(advancement, s)
         );
         manager.flushDirty(sp);
         manager.save();
