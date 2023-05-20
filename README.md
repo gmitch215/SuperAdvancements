@@ -13,6 +13,7 @@ This API serves to solve this by creating a simple and easy-to-use API that supp
 ---
 
 ## ❓ Why?
+- **Small**: The API aims to be as small, compact, and useful as possible, while also maintaining quality-of-life features.
 - **Simple**: SuperAdvancements aims to have as much documentation and minimalization as possible in order to make usage seamless and comfortable.
 - **Flexible**: SuperAdvancements is designed to be as flexible as possible, allowing for easy customization and modification. We often have API methods that directly access the methods we are using, allowing for even more modification.
 - **Transparent**: SuperAdvancements is completely open source, has multiple issue reporting and support channels, and downloadable from your favorite repositories to depend and modify with.
