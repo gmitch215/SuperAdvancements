@@ -37,7 +37,7 @@ This API serves to solve this by creating a simple and easy-to-use API that supp
     
     <repositories>
         <repository>
-            <id>codemc-snapshots</id>
+            <id>codemc-releases</id>
             <url>https://repo.codemc.io/repository/maven-releases/</url>
         </repository>
     </repositories>
