@@ -10,6 +10,7 @@ dependencies {
     api(project(":superadvancements-abstract"))
 
     compileOnly("org.spigotmc:spigot:$mcVersion-R0.1-SNAPSHOT:remapped-mojang")
+    testImplementation("org.spigotmc:spigot:$mcVersion-R0.1-SNAPSHOT:remapped-mojang")
 }
 
 java {
