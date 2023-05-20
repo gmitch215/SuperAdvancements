@@ -3,20 +3,18 @@ package me.gamercoder215.superadvancements.advancement;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
+import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATrigger;
 import org.bukkit.Keyed;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents an abstract Advancement.
  */
-public final class Advancement implements Keyed {
+public final class Advancement implements Keyed, Comparable<Advancement> {
     
     private final NamespacedKey key;
     private final Advancement parent;
@@ -32,7 +30,8 @@ public final class Advancement implements Keyed {
         this.parent = parent;
         this.key = key;
 
-        parent.children.add(this);
+        flags.addAll(Set.of(AFlag.MESSAGE, AFlag.TOAST));
+        if (parent != null) parent.children.add(this);
     }
 
     /**
@@ -69,9 +68,14 @@ public final class Advancement implements Keyed {
     /**
      * Sets the Advancement's display.
      * @param display Display to set
+     * @throws IllegalArgumentException if display is null, or missing title, frame, or icon
      */
-    public void setDisplay(@NotNull ADisplay display) {
+    public void setDisplay(@NotNull ADisplay display) throws IllegalArgumentException {
         if (display == null) throw new IllegalArgumentException("Display cannot be null");
+        if (display.getTitleAsString() == null) throw new IllegalArgumentException("Display title cannot be null");
+        if (display.getFrame() == null) throw new IllegalArgumentException("Display frame cannot be null");
+        if (display.getIcon() == null) throw new IllegalArgumentException("Display icon cannot be null");
+
         this.display = display;
     }
 
@@ -147,12 +151,14 @@ public final class Advancement implements Keyed {
     }
 
     /**
-     * Sets the Advancement's criteria.
+     * <p>Sets the Advancement's criteria.</p>
+     * <p>All Advancements need to have at least one type of criteria. If you plan to award this Advancement manually, use {@link ATrigger#impossible()}.</p>
      * @param criteria Criteria to set
+     * @throws IllegalArgumentException if criteria is null
      */
-    public void setCriteria(@Nullable Map<String, ACriteria> criteria) {
+    public void setCriteria(@NotNull Map<String, ACriteria> criteria) throws IllegalArgumentException {
+        if (criteria == null) throw new IllegalArgumentException("Criteria cannot be null");
         this.criteria.clear();
-        if (criteria != null) this.criteria.putAll(criteria);
     }
 
     /**
@@ -167,8 +173,10 @@ public final class Advancement implements Keyed {
      * Adds to the Advancement's criteria.
      * @param name Name of the criteria
      * @param criteria Criteria to set
+     * @throws IllegalArgumentException if name is null
      */
-    public void addCriteria(@NotNull String name, @Nullable ACriteria criteria) {
+    public void addCriteria(@NotNull String name, @Nullable ACriteria criteria) throws IllegalArgumentException {
+        if (name == null) throw new IllegalArgumentException("Criteria name cannot be null");
         if (criteria != null) this.criteria.put(name, criteria);
     }
 
@@ -201,6 +209,25 @@ public final class Advancement implements Keyed {
         return new Builder();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Advancement that = (Advancement) o;
+        return Objects.equals(key, that.key);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key);
+    }
+
+    @Override
+    public int compareTo(@NotNull Advancement o) {
+        if (o == null) throw new IllegalArgumentException("Advancement cannot be null");
+        return key.toString().compareTo(o.key.toString());
+    }
+
     /**
      * Represents the Advancement Builder.
      */
@@ -210,8 +237,8 @@ public final class Advancement implements Keyed {
         ADisplay display;
         Advancement parent = null;
         AReward reward;
-        Set<AFlag> flags;
-        Map<String, ACriteria> criteria;
+        final Set<AFlag> flags = new HashSet<>();
+        final Map<String, ACriteria> criteria = new HashMap<>();
 
         Builder() {}
 
@@ -268,7 +295,8 @@ public final class Advancement implements Keyed {
          */
         @NotNull
         public Builder flags(@Nullable Iterable<? extends AFlag> flags) {
-            this.flags = flags == null ? null : ImmutableSet.copyOf(flags);
+            this.flags.clear();
+            if (flags != null) this.flags.addAll(ImmutableSet.copyOf(flags));
             return this;
         }
 
@@ -279,18 +307,20 @@ public final class Advancement implements Keyed {
          */
         @NotNull
         public Builder flags(@Nullable AFlag... flags) {
-            this.flags = flags == null ? null : ImmutableSet.copyOf(flags);
+            if (flags != null) flags(ImmutableSet.copyOf(flags));
             return this;
         }
 
         /**
-         * Sets the Advancement's criteria.
+         * <p>Sets the Advancement's criteria.</p>
+         * <p>All Advancements need to have at least one type of criteria. If you plan to award this Advancement manually, use {@link ATrigger#impossible()}.</p>
          * @param criteria Criteria to set
          * @return this class, for chaining
          */
         @NotNull
         public Builder criteria(@Nullable Map<String, ACriteria> criteria) {
-            this.criteria.putAll(criteria);
+            this.criteria.clear();
+            if (criteria != null) this.criteria.putAll(criteria);
             return this;
         }
 
@@ -299,6 +329,7 @@ public final class Advancement implements Keyed {
          * @param name Name of the Criteria
          * @param criteria Criteria to set
          * @return this class, for chaining
+         * @see #criteria(Map)
          */
         @NotNull
         public Builder criteria(@NotNull String name, @Nullable ACriteria criteria) {
@@ -307,21 +338,35 @@ public final class Advancement implements Keyed {
         }
 
         /**
+         * Adds to the Advancement's criteria.
+         * @param name Name of the Criteria
+         * @param trigger ACriteria Trigger to set
+         * @return this class, for chaining
+         * @see #criteria(Map)
+         */
+        @NotNull
+        public Builder criteria(@NotNull String name, @Nullable ATrigger trigger) {
+            if (trigger != null) criteria(name, new ACriteria(trigger));
+            return this;
+        }
+
+        /**
          * Builds the Advancement.
          * @return Constructed Advancement
-         * @throws IllegalStateException if the key or display is null
+         * @throws IllegalStateException if the key or display is null, or criteria is empty
          */
         @NotNull
         public Advancement build() throws IllegalStateException {
             if (key == null) throw new IllegalStateException("Key cannot be null");
             if (display == null) throw new IllegalStateException("Display cannot be null");
+            if (criteria.isEmpty()) throw new IllegalStateException("Criteria cannot be empty");
             
             Advancement a = new Advancement(parent, key);
             a.display = display;
-            a.reward = reward;
 
-            a.flags.addAll(flags);
-            a.criteria.putAll(criteria);
+            if (reward != null) a.reward = reward;
+            if (flags != null) a.flags.addAll(flags);
+            if (criteria != null) a.criteria.putAll(criteria);
 
             return a;
         }
