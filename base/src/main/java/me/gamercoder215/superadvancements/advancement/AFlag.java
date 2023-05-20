@@ -6,23 +6,23 @@ package me.gamercoder215.superadvancements.advancement;
 public enum AFlag {
 
     /**
-     * The advancement will display a Toast Message upon completion.
+     * The advancement will display a Toast Message upon completion. Added by default.
      */
     TOAST,
 
     /**
-     * The advancement will display a hidden "true" value, allowing the creation of empty Advancement Tabs or drawing lines.
+     * Whether to hide this advancement and all its children from the advancement screen until it is completed.
      */
-    HIDDEN_TRUE,
+    HIDDEN,
 
     /**
-     * The advancement will broadcast a message upon completion.
+     * The advancement will broadcast a message upon completion. Added by default.
      */
     MESSAGE,
 
     /**
-     * The advancement only needs one of the criteria to be completed.
+     * If the advancement has multiple criteria, the advancement will not show a progress bar indicating how many criteria it has and how many are completed.
      */
-    ONLY_ONE_CRITERIA
+    MERGE_CRITERIA
 
 }
