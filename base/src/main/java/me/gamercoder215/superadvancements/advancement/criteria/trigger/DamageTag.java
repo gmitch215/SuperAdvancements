@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Damage Tag for the Damage Criteria Trigger
+ * <p>Represents a Damage Tag for the Damage Criteria Trigger.</p>
+ * <p>This only exists in 1.19.4+ and above. To ensure the API evolves correctly, this is generally not supported on versions below that.</p>
  */
 public enum DamageTag implements Keyed {
 
