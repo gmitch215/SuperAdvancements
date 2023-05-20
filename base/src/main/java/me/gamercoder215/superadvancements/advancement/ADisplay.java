@@ -50,9 +50,9 @@ public abstract class ADisplay {
     }
 
     /**
-     * <p>Sets the background texture of the Advancement.</p>
+     * <p>Sets the background texture of the Advancement. This will only apply to the {@linkplain Advancement#getRoot() root advancement}.</p>
      * <p>This should link to a file in one of the player's resource packs (or the Vanilla textures), such as:</p>
-     * <p>{@code setBackgroundTexture("textures/blocks/stone.png")}</p>
+     * <p>{@code setBackgroundTexture("textures/block/stone.png")}</p>
      * @param texture Texture String
      */
     public void setBackgroundTexture(@Nullable String texture) {
@@ -60,15 +60,15 @@ public abstract class ADisplay {
     }
 
     /**
-     * <p>Sets the background texture of the Advancement.</p>
-     * <p>This sets the background texture to {@code textures/blocks/<material>.png} if {@link Material#isBlock()} returns true or {@code textures/items/<material>.png} if it returns false.</p>
+     * <p>Sets the background texture of the Advancement. This will only apply to the {@linkplain Advancement#getRoot() root advancement}.</p>
+     * <p>This sets the background texture to {@code textures/block/<material>.png} if {@link Material#isBlock()} returns true or {@code textures/item/<material>.png} if it returns false.</p>
      * @param m Material to use
      */
     public void setBackgroundTexture(@Nullable Material m) {
         if (m == null)
             this.backgroundTexture = null;
         else
-            this.backgroundTexture = "textures/" + (m.isBlock() ? "blocks" : "items") + "/" + m.name().toLowerCase() + ".png";
+            this.backgroundTexture = "textures/" + (m.isBlock() ? "block" : "item") + "/" + m.name().toLowerCase() + ".png";
     }
 
     /**
