@@ -3,7 +3,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("org.sonarqube") version "4.2.0.3129"
+    id("org.sonarqube") version "4.0.0.2929"
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
 
     java
@@ -13,7 +13,7 @@ plugins {
 }
 
 val pGroup = "me.gamercoder215.superadvancements"
-val pVersion = "1.0.0"
+val pVersion = "1.0.1"
 val pAuthor = "GamerCoder"
 
 sonarqube {

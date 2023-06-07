@@ -26,6 +26,8 @@ public final class Advancement implements Keyed, Comparable<Advancement> {
     private final Set<AFlag> flags = new HashSet<>();
     private final Map<String, ACriteria> criteria = new HashMap<>();
 
+    private boolean telemetry = false;
+
     private Advancement(Advancement parent, NamespacedKey key) {
         this.parent = parent;
         this.key = key;
@@ -209,6 +211,22 @@ public final class Advancement implements Keyed, Comparable<Advancement> {
         return new Builder();
     }
 
+    /**
+     * Whether this Advancement will sends its telemetry data to Mojang.
+     * @return true if telemetry is enabled, false otherwise
+     */
+    public boolean isTelemetry() {
+        return telemetry;
+    }
+
+    /**
+     * Sets whether this Advancement will sends its telemetry data to Mojang.
+     * @param telemetry true if telemetry is enabled, false otherwise
+     */
+    public void setTelemetry(boolean telemetry) {
+        this.telemetry = telemetry;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -239,6 +257,7 @@ public final class Advancement implements Keyed, Comparable<Advancement> {
         AReward reward;
         final Set<AFlag> flags = new HashSet<>();
         final Map<String, ACriteria> criteria = new HashMap<>();
+        boolean telemetry = false;
 
         Builder() {}
 
@@ -351,6 +370,17 @@ public final class Advancement implements Keyed, Comparable<Advancement> {
         }
 
         /**
+         * Sets whether this Advancement will sends its telemetry data to Mojang.
+         * @param telemetry true if telemetry is enabled, false otherwise
+         * @return this class, for chaining
+         */
+        @NotNull
+        public Builder telemetry(boolean telemetry) {
+            this.telemetry = telemetry;
+            return this;
+        }
+
+        /**
          * Builds the Advancement.
          * @return Constructed Advancement
          * @throws IllegalStateException if the key or display is null, or criteria is empty
@@ -363,6 +393,7 @@ public final class Advancement implements Keyed, Comparable<Advancement> {
             
             Advancement a = new Advancement(parent, key);
             a.display = display;
+            a.telemetry = telemetry;
 
             if (reward != null) a.reward = reward;
             if (flags != null) a.flags.addAll(flags);

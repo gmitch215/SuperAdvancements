@@ -736,9 +736,11 @@ public final class ATrigger implements Keyed {
      * @param item The item predicate for the item used to place the block.
      * @param location A location predicate for the location of the block.
      * @param state A Block State mirror for the block that was placed.
+     * @deprecated Minecraft 1.20 has removed the usage of item, location, and state predicates for this trigger. Please use {@link #placedBlock(Material)}
      * @return Placed Block Trigger
      */
     @NotNull
+    @Deprecated
     public static ATrigger placedBlock(@Nullable Material block, @Nullable ATriggerPredicate.Item item, @Nullable ATriggerPredicate.Location location, @Nullable BlockState state) {
         return new ATrigger("placed_block", of("block", block, "item", item, "location", location, "state", state));
     }
