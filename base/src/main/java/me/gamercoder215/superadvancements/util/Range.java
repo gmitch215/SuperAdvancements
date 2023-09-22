@@ -28,8 +28,11 @@ public final class Range implements Predicate<Number>, Comparable<Range> {
      * Constructs a new Range.
      * @param min Minimum Value
      * @param max Maximum Value
+     * @throws IllegalArgumentException if the minimum is greater than the maximum
      */
-    public Range(double min, double max) {
+    public Range(double min, double max) throws IllegalArgumentException {
+        if (min > max) throw new IllegalArgumentException("Minimum cannot be greater than maximum");
+
         this.min = min;
         this.max = max;
     }
