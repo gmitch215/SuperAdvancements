@@ -4,77 +4,16 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.Decoder;
 import com.mojang.serialization.Encoder;
 import com.mojang.serialization.MapCodec;
-import me.gamercoder215.superadvancements.advancement.ADisplay;
-import me.gamercoder215.superadvancements.advancement.AFlag;
-import me.gamercoder215.superadvancements.advancement.AProgress;
-import me.gamercoder215.superadvancements.advancement.AReward;
 import me.gamercoder215.superadvancements.advancement.Advancement;
+import me.gamercoder215.superadvancements.advancement.*;
 import me.gamercoder215.superadvancements.advancement.criteria.ACriteria;
 import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATrigger;
 import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATriggerPredicate;
 import me.gamercoder215.superadvancements.advancement.criteria.trigger.DamageTag;
 import me.gamercoder215.superadvancements.util.Range;
 import me.gamercoder215.superadvancements.wrapper.Wrapper;
-import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.advancements.AdvancementRequirements;
-import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.DisplayInfo;
-import net.minecraft.advancements.FrameType;
-import net.minecraft.advancements.critereon.BeeNestDestroyedTrigger;
-import net.minecraft.advancements.critereon.BlockPredicate;
-import net.minecraft.advancements.critereon.BredAnimalsTrigger;
-import net.minecraft.advancements.critereon.BrewedPotionTrigger;
-import net.minecraft.advancements.critereon.ChangeDimensionTrigger;
-import net.minecraft.advancements.critereon.ChanneledLightningTrigger;
-import net.minecraft.advancements.critereon.ConstructBeaconTrigger;
-import net.minecraft.advancements.critereon.ConsumeItemTrigger;
-import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.CuredZombieVillagerTrigger;
-import net.minecraft.advancements.critereon.DamagePredicate;
-import net.minecraft.advancements.critereon.DamageSourcePredicate;
-import net.minecraft.advancements.critereon.DistancePredicate;
-import net.minecraft.advancements.critereon.DistanceTrigger;
-import net.minecraft.advancements.critereon.EnchantedItemTrigger;
-import net.minecraft.advancements.critereon.EnchantmentPredicate;
-import net.minecraft.advancements.critereon.EnterBlockTrigger;
-import net.minecraft.advancements.critereon.EntityEquipmentPredicate;
-import net.minecraft.advancements.critereon.EntityFlagsPredicate;
-import net.minecraft.advancements.critereon.EntityHurtPlayerTrigger;
-import net.minecraft.advancements.critereon.EntityPredicate;
-import net.minecraft.advancements.critereon.EntityTypePredicate;
-import net.minecraft.advancements.critereon.FishingRodHookedTrigger;
-import net.minecraft.advancements.critereon.ImpossibleTrigger;
-import net.minecraft.advancements.critereon.InventoryChangeTrigger;
-import net.minecraft.advancements.critereon.ItemDurabilityTrigger;
-import net.minecraft.advancements.critereon.ItemPredicate;
-import net.minecraft.advancements.critereon.ItemUsedOnLocationTrigger;
-import net.minecraft.advancements.critereon.KilledByCrossbowTrigger;
-import net.minecraft.advancements.critereon.KilledTrigger;
-import net.minecraft.advancements.critereon.LevitationTrigger;
-import net.minecraft.advancements.critereon.LightPredicate;
-import net.minecraft.advancements.critereon.LightningStrikeTrigger;
-import net.minecraft.advancements.critereon.LocationPredicate;
-import net.minecraft.advancements.critereon.LootTableTrigger;
-import net.minecraft.advancements.critereon.MinMaxBounds;
-import net.minecraft.advancements.critereon.PickedUpItemTrigger;
-import net.minecraft.advancements.critereon.PlayerHurtEntityTrigger;
-import net.minecraft.advancements.critereon.PlayerInteractTrigger;
-import net.minecraft.advancements.critereon.PlayerTrigger;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
-import net.minecraft.advancements.critereon.ShotCrossbowTrigger;
-import net.minecraft.advancements.critereon.SlideDownBlockTrigger;
-import net.minecraft.advancements.critereon.StartRidingTrigger;
-import net.minecraft.advancements.critereon.StatePropertiesPredicate;
-import net.minecraft.advancements.critereon.TagPredicate;
-import net.minecraft.advancements.critereon.TameAnimalTrigger;
-import net.minecraft.advancements.critereon.TargetBlockTrigger;
-import net.minecraft.advancements.critereon.TradeTrigger;
-import net.minecraft.advancements.critereon.UsedEnderEyeTrigger;
-import net.minecraft.advancements.critereon.UsedTotemTrigger;
-import net.minecraft.advancements.critereon.UsingItemTrigger;
+import net.minecraft.advancements.*;
+import net.minecraft.advancements.critereon.*;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.MappedRegistry;
@@ -101,11 +40,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootDataManager;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
-import org.bukkit.Bukkit;
-import org.bukkit.Keyed;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
 import org.bukkit.craftbukkit.v1_20_R2.CraftServer;
@@ -127,16 +62,7 @@ import org.bukkit.potion.PotionType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -1301,7 +1227,7 @@ final class Wrapper1_20_R2 implements Wrapper {
         net.minecraft.advancements.AdvancementHolder nms = toNMS(a);
 
         if (manager.advancements.containsKey(nms.id())) throw new IllegalStateException("Advancement is already registered");
-        manager.advancements.put(key, nms);
+        manager.tree().addAll(Set.of(nms));
     }
 
     @Override
@@ -1319,7 +1245,7 @@ final class Wrapper1_20_R2 implements Wrapper {
 
     @Override
     public void unregister(NamespacedKey key) {
-        manager.advancements.remove(toNMS(key));
+        manager.tree().remove(Set.of(toNMS(key)));
         Bukkit.getOnlinePlayers().forEach(p -> removeAdvancement(p, Set.of(key)));
     }
 
