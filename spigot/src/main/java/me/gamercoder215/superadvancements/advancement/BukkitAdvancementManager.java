@@ -52,7 +52,7 @@ public final class BukkitAdvancementManager implements PlayerAdvancementManager 
 
     /**
      * <p>Registers an Advancement into the server's list of Advancements.</p>
-     * <p>This method is automatically called.</p>
+     * <p>This method is <strong>not</strong> automatically called.</p>
      * @param a Advancement to register
      * @throws IllegalStateException if the Advancement is already registered
      */
