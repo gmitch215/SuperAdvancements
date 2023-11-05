@@ -81,13 +81,6 @@ operator fun BukkitAdvancementManager.minus(advancement: NamespacedKey): BukkitA
 
 /**
  * Removes the specified advancements from this advancement manager.
- * @param advancement The advancement to remove.
- * @return this advancement manager
- */
-operator fun BukkitAdvancementManager.minus(advancement: Iterable<Advancement>) = minus(advancement.map { it.key })
-
-/**
- * Removes the specified advancements from this advancement manager.
  * @param advancement The advancement to remove, identified by their keys.
  * @return this advancement manager
  */
