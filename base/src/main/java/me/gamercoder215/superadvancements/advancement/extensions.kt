@@ -1,5 +1,7 @@
 package me.gamercoder215.superadvancements.advancement
 
+import me.gamercoder215.superadvancements.advancement.criteria.ACriteria
+import me.gamercoder215.superadvancements.advancement.criteria.trigger.ATrigger
 import org.bukkit.Keyed
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.Recipe
@@ -71,3 +73,17 @@ operator fun <T> AReward.minus(recipe: T) where T : Recipe, T : Keyed = this.clo
  */
 @Throws(IllegalStateException::class)
 fun Advancement.Builder.build(callback: (Advancement) -> Unit) = callback(build())
+
+/**
+ * Adds a criteria to the advancement.
+ * @param criteria The criteria's name.
+ * @param trigger The crieria object to set.
+ */
+operator fun Advancement.Builder.set(criteria: String, trigger: ACriteria?) = this.criteria(criteria, trigger)
+
+/**
+ * Adds a criteria to the advancement.
+ * @param criteria The criteria's name.
+ * @param trigger The crieria's trigger to set.
+ */
+operator fun Advancement.Builder.set(criteria: String, trigger: ATrigger?) = this.criteria(criteria, trigger)
