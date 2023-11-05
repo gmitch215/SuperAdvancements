@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 /**
  * Utility Class for a number range
  */
-public final class Range implements Predicate<Number>, Comparable<Range> {
+public final class Range implements Predicate<Number>, Comparable<Range>, Cloneable {
 
     /**
      * Range of {@linkplain Double#NEGATIVE_INFINITY negative infinity} to {@linkplain Double#POSITIVE_INFINITY positive infinity}
@@ -20,6 +20,11 @@ public final class Range implements Predicate<Number>, Comparable<Range> {
      * Range of 0 to 0
      */
     public static final Range ZERO = new Range(0, 0);
+
+    /**
+     * A comparator for comparing the {@linkplain #getMinimum() minimum}, then the {@linkplain #getMaximum() maximum}.
+     */
+    public static final Comparator<Range> COMPARATOR = Comparator.comparingDouble(Range::getMinimum).thenComparing(Range::getMaximum);
 
     private double min;
     private double max;
@@ -117,6 +122,15 @@ public final class Range implements Predicate<Number>, Comparable<Range> {
                 '}';
     }
 
+    @Override
+    public Range clone() {
+        try {
+            return (Range) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Tests if a number is within the {@linkplain #getMinimum() minimum} and {@linkplain #getMaximum() maximum}.
      * @param number the input argument
@@ -202,8 +216,6 @@ public final class Range implements Predicate<Number>, Comparable<Range> {
 
     @Override
     public int compareTo(@NotNull Range o) {
-        return Comparator.comparingDouble(Range::getMinimum)
-                .thenComparing(Range::getMaximum)
-                .compare(this, o);
+        return COMPARATOR.compare(this, o);
     }
 }
