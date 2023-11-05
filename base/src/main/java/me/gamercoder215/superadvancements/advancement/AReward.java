@@ -10,13 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * A reward for an Advancement for a player upon Completion.
  */
 @SuppressWarnings("unchecked")
-public final class AReward {
+public final class AReward implements Cloneable {
 
     /**
      * Represents an empty Advancement Reward.
@@ -198,5 +199,53 @@ public final class AReward {
         addRecipes(recipes == null ? null : ImmutableSet.copyOf(recipes));
     }
 
+    /**
+     * Removes recipes that will be granted to the player upon completing the advancement.
+     * @param <T> Recipe Type
+     * @param recipes Recipes to remove
+     */
+    public <T extends Recipe & Keyed> void removeRecipes(@Nullable Iterable<? extends T> recipes) {
+        if (recipes != null) for (T recipe : recipes) this.recipes.remove(recipe.getKey());
+    }
 
+    /**
+     * Removes recipes that will be granted to the player upon completing the advancement.
+     * @param <T> Recipe Type
+     * @param recipes Recipes to remove
+     */
+    @SafeVarargs
+    public final <T extends Recipe & Keyed> void removeRecipes(@Nullable T... recipes) {
+    	removeRecipes(recipes == null ? null : ImmutableSet.copyOf(recipes));
+    }
+
+    @Override
+    public AReward clone() {
+        try {
+            return (AReward) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AReward aReward = (AReward) o;
+        return experience == aReward.experience && Objects.equals(lootTables, aReward.lootTables) && Objects.equals(recipes, aReward.recipes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(experience, lootTables, recipes);
+    }
+
+    @Override
+    public String toString() {
+        return "AReward{" +
+                "experience=" + experience +
+                ", lootTables=" + lootTables +
+                ", recipes=" + recipes +
+                '}';
+    }
 }

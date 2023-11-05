@@ -50,7 +50,6 @@ import org.bukkit.craftbukkit.v1_20_R2.block.CraftBlockStates;
 import org.bukkit.craftbukkit.v1_20_R2.enchantments.CraftEnchantment;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.v1_20_R2.potion.CraftPotionUtil;
 import org.bukkit.craftbukkit.v1_20_R2.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.v1_20_R2.util.CraftNamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -146,6 +145,7 @@ final class Wrapper1_20_R2 implements Wrapper {
         return set;
     }
 
+    @SuppressWarnings("RedundantCast")
     public static Optional<StatePropertiesPredicate> toNMSP(BlockState state) {
         if (state == null) return Optional.empty();
         Set<Property.Value> set = toNMS(state);
@@ -985,8 +985,10 @@ final class Wrapper1_20_R2 implements Wrapper {
 
     public static PotionType fromNMS(Potion potion) {
         if (potion == null) return null;
-        ResourceLocation loc = BuiltInRegistries.POTION.getKey(potion);
-        return CraftPotionUtil.toBukkit(loc.getPath()).getType();
+        return Arrays.stream(PotionType.values())
+                .filter(p -> p.getKey().getKey().equalsIgnoreCase(potion.getName("")))
+                .findFirst()
+                .orElse(PotionType.WATER);
     }
 
     public static BlockState fromNMS(Block block, StatePropertiesPredicate predicate) {

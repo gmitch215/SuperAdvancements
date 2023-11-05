@@ -23,7 +23,8 @@ public interface PlayerAdvancementManager {
     Player getPlayer();
 
     /**
-     * Resends the packets involving Advancement Screen data to the player.
+     * <p>Resends the packets involving Advancement Screen data to the player.</p>
+     * <p>Usually, SuperAdvancements will update the player automatically when necessary. This method is provided for convinence.</p>
      */
     void update();
 

@@ -5,6 +5,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
     id("org.sonarqube") version "4.0.0.2929"
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+    kotlin("jvm") version "1.9.20"
 
     java
     `maven-publish`
@@ -13,7 +14,7 @@ plugins {
 }
 
 val pGroup = "me.gamercoder215.superadvancements"
-val pVersion = "1.1.0"
+val pVersion = "1.1.1"
 val pAuthor = "GamerCoder"
 
 sonarqube {
@@ -134,11 +135,13 @@ val jvmVersion = JavaVersion.VERSION_11
 
 subprojects {
     apply<JacocoPlugin>()
+    apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "org.sonarqube")
     apply(plugin = "com.github.johnrengelman.shadow")
 
     dependencies {
         compileOnly("org.jetbrains:annotations:24.0.1")
+        compileOnly("org.jetbrains.kotlin:kotlin-stdlib")
 
         testImplementation("org.mockito:mockito-core:5.7.0")
         testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
@@ -166,6 +169,10 @@ subprojects {
             options.compilerArgs.addAll(listOf("-Xlint:all", "-Xlint:-processing"))
         }
 
+        compileKotlin {
+            kotlinOptions.jvmTarget = jvmVersion.toString()
+        }
+
         jacocoTestReport {
             dependsOn(test)
 
@@ -179,7 +186,7 @@ subprojects {
         }
 
         clean {
-            delete("$projectDir/logs", buildDir)
+            delete("$projectDir/logs", layout.buildDirectory)
         }
 
         test {
