@@ -13,7 +13,7 @@ plugins {
 }
 
 val pGroup = "me.gamercoder215.superadvancements"
-val pVersion = "1.1.0"
+val pVersion = "1.1.1"
 val pAuthor = "GamerCoder"
 
 sonarqube {
@@ -179,7 +179,7 @@ subprojects {
         }
 
         clean {
-            delete("$projectDir/logs", buildDir)
+            delete("$projectDir/logs", layout.buildDirectory)
         }
 
         test {
