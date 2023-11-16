@@ -47,7 +47,7 @@ tasks {
             title = "SuperAdvancements ${project.version} API"
             encoding = "UTF-8"
             overview = "base/src/main/javadoc/overview.html"
-            links("https://hub.spigotmc.org/javadocs/spigot/", "https://jd.advntr.dev/api/4.13.1/", "https://jd.papermc.io/paper/1.19/", "https://javadoc.io/doc/org.jetbrains/annotations/24.0.1/")
+            links("https://hub.spigotmc.org/javadocs/spigot/", "https://jd.advntr.dev/api/4.13.1/", "https://jd.papermc.io/paper/1.19/", "https://javadoc.io/doc/org.jetbrains/annotations/24.1.0/")
         }
     }
 }
@@ -140,7 +140,7 @@ subprojects {
     apply(plugin = "com.github.johnrengelman.shadow")
 
     dependencies {
-        compileOnly("org.jetbrains:annotations:24.0.1")
+        compileOnly("org.jetbrains:annotations:24.1.0")
         compileOnly("org.jetbrains.kotlin:kotlin-stdlib")
 
         testImplementation("org.mockito:mockito-core:5.7.0")
