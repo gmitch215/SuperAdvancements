@@ -221,8 +221,6 @@ subprojects {
                 )
             }
 
-            exclude("META-INF", "META-INF/**")
-
             archiveClassifier.set("")
         }
     }
