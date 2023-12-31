@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import io.github.patrick.gradle.remapper.RemapTask
 
 plugins {
@@ -23,9 +24,18 @@ tasks {
         dependsOn("remap")
     }
 
+    jar.configure {
+        enabled = false
+    }
+
     remap {
         dependsOn("shadowJar")
 
+        doFirst {
+            Thread.sleep(3000)
+        }
+
+        inputTask.set(getByName<ShadowJar>("shadowJar"))
         version.set(mcVersion)
         action.set(RemapTask.Action.MOJANG_TO_SPIGOT)
         archiveName.set("${project.name}-${project.version}.jar")

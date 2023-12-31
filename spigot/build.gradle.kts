@@ -1,28 +1,30 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+val versions = listOf(
+    "1_12_R1",
+    "1_13_R1",
+    "1_13_R2",
+    "1_14_R1",
+    "1_15_R1",
+    "1_16_R1",
+    "1_16_R2",
+    "1_16_R3",
+    "1_17_R1",
+    "1_18_R1",
+    "1_18_R2",
+    "1_19_R1",
+    "1_19_R2",
+    "1_19_R3",
+    "1_20_R1",
+    "1_20_R2",
+    "1_20_R3"
+)
+
 dependencies {
     api(project(":superadvancements"))
     api(project(":superadvancements-abstract"))
 
-    listOf(
-        "1_12_R1",
-        "1_13_R1",
-        "1_13_R2",
-        "1_14_R1",
-        "1_15_R1",
-        "1_16_R1",
-        "1_16_R2",
-        "1_16_R3",
-        "1_17_R1",
-        "1_18_R1",
-        "1_18_R2",
-        "1_19_R1",
-        "1_19_R2",
-        "1_19_R3",
-        "1_20_R1",
-        "1_20_R2",
-        "1_20_R3"
-    ).forEach {
+    versions.forEach {
         api(project(":superadvancements-$it"))
     }
 
@@ -40,6 +42,11 @@ java {
 }
 
 tasks {
+    compileJava {
+        versions.subList(versions.indexOf("1_18_R1"), versions.size)
+            .forEach { dependsOn(project(":superadvancements-$it").tasks["assemble"]) }
+    }
+
     javadoc {
         sourceSets["main"].allJava.srcDir("src/main/javadoc")
 
