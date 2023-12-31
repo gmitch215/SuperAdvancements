@@ -868,7 +868,7 @@ final class Wrapper1_20_R3 implements Wrapper {
 
     public static net.minecraft.advancements.AdvancementHolder toNMS(Advancement a) {
         if (a == null) return null;
-        if (manager.advancements.get(toNMS(a.getKey())) != null) return manager.advancements.get(toNMS(a.getKey()));
+        if (manager.tree().get(toNMS(a.getKey())) != null) return manager.tree().get(toNMS(a.getKey())).holder();
 
         ADisplay display = a.getDisplay();
         String title = display.getTitleAsString();
@@ -879,7 +879,7 @@ final class Wrapper1_20_R3 implements Wrapper {
         if (a.getParent() == null && display.getBackgroundTexture() != null)
             bg = new ResourceLocation(display.getBackgroundTexture());
 
-        DisplayInfo nmsDisplay = new DisplayInfo(toNMS(display.getIcon()), Component.literal(title), Component.literal(desc), Optional.of(bg), frame, a.hasFlag(AFlag.TOAST), a.hasFlag(AFlag.MESSAGE), a.hasFlag(AFlag.HIDDEN));
+        DisplayInfo nmsDisplay = new DisplayInfo(toNMS(display.getIcon()), Component.literal(title), Component.literal(desc), Optional.ofNullable(bg), frame, a.hasFlag(AFlag.TOAST), a.hasFlag(AFlag.MESSAGE), a.hasFlag(AFlag.HIDDEN));
         nmsDisplay.setLocation(display.getX(), display.getY());
 
         ResourceLocation parent = a.getParent() == null ? null : toNMS(a.getParent().getKey());
@@ -1166,23 +1166,14 @@ final class Wrapper1_20_R3 implements Wrapper {
 
     public static AReward fromNMS(AdvancementRewards rewards) {
         if (rewards == null) return AReward.EMPTY;
-        try {
-            Field experienceF = AdvancementRewards.class.getDeclaredField("b");
-            experienceF.setAccessible(true);
-            int experience = experienceF.getInt(rewards);
+        int experience = rewards.experience();
+        List<ResourceLocation> loot = rewards.loot();
 
-            Field lootF = AdvancementRewards.class.getDeclaredField("c");
-            lootF.setAccessible(true);
-            ResourceLocation[] loot = (ResourceLocation[]) lootF.get(rewards);
-
-            return new AReward(
-                    experience,
-                    Arrays.stream(loot).map(Wrapper1_20_R3::fromNMS).collect(Collectors.toList()),
-                    rewards.recipes().stream().map(Wrapper1_20_R3::fromNMS).collect(Collectors.toList())
-            );
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
+        return new AReward(
+                experience,
+                loot.stream().map(Wrapper1_20_R3::fromNMS).collect(Collectors.toList()),
+                rewards.recipes().stream().map(Wrapper1_20_R3::fromNMS).collect(Collectors.toList())
+        );
     }
 
     public static Advancement fromNMS(net.minecraft.advancements.AdvancementHolder holder) {
@@ -1205,7 +1196,7 @@ final class Wrapper1_20_R3 implements Wrapper {
                 .reward(fromNMS(a.rewards()))
                 .criteria(criteria);
 
-        if (a.parent().isPresent()) builder.parent(fromNMS(manager.advancements.get(a.parent().get())));
+        if (a.parent().isPresent()) builder.parent(fromNMS(manager.tree().get(a.parent().get()).holder()));
         if (a.requirements().size() == 1) builder.flags(AFlag.MERGE_CRITERIA);
         if (nmsDisplay.shouldAnnounceChat()) builder.flags(AFlag.MESSAGE);
         if (nmsDisplay.shouldShowToast()) builder.flags(AFlag.TOAST);
@@ -1227,13 +1218,13 @@ final class Wrapper1_20_R3 implements Wrapper {
     public void register(Advancement a) {
         net.minecraft.advancements.AdvancementHolder nms = toNMS(a);
 
-        if (manager.advancements.containsKey(nms.id())) throw new IllegalStateException("Advancement is already registered");
+        if (isRegistered(fromNMS(nms.id()))) throw new IllegalStateException("Advancement is already registered");
         manager.tree().addAll(Set.of(nms));
     }
 
     @Override
     public Advancement getAdvancement(NamespacedKey key) {
-        net.minecraft.advancements.AdvancementHolder nms = manager.advancements.get(toNMS(key));
+        net.minecraft.advancements.AdvancementHolder nms = manager.tree().get(toNMS(key)).holder();
         if (nms == null) return null;
 
         return fromNMS(nms);
@@ -1241,7 +1232,7 @@ final class Wrapper1_20_R3 implements Wrapper {
 
     @Override
     public boolean isRegistered(NamespacedKey key) {
-        return manager.advancements.containsKey(toNMS(key));
+        return manager.tree().get(toNMS(key)) != null;
     }
 
     @Override
@@ -1290,7 +1281,7 @@ final class Wrapper1_20_R3 implements Wrapper {
     public AProgress getProgress(Player p, NamespacedKey key) {
         if (!isRegistered(key)) throw new IllegalArgumentException("Advancement is not registered");
         ServerPlayer sp = toNMS(p);
-        net.minecraft.advancements.AdvancementHolder nms = manager.advancements.get(toNMS(key));
+        net.minecraft.advancements.AdvancementHolder nms = manager.tree().get(toNMS(key)).holder();
 
         return new AProgress1_20_R3(p, nms, sp.getAdvancements().getOrStartProgress(nms));
     }
@@ -1315,7 +1306,8 @@ final class Wrapper1_20_R3 implements Wrapper {
         net.minecraft.advancements.Advancement lastSelectedTab = getObject(sp.getAdvancements(), "l", net.minecraft.advancements.Advancement.class);
         if (lastSelectedTab == null) return null;
 
-        return fromNMS((manager.advancements.values().stream()
+        return fromNMS((manager.tree().nodes().stream()
+                .map(AdvancementNode::holder)
                 .filter(a -> a.value().equals(lastSelectedTab))
                 .findFirst()
                 .orElse(null)));

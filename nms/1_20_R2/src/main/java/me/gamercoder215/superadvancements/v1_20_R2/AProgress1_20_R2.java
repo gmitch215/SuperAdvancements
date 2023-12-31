@@ -64,7 +64,7 @@ final class AProgress1_20_R2 implements AProgress {
     @Override
     public @NotNull Map<String, ACriteriaProgress> getCriteria() {
         try {
-            Field criteriaF = AdvancementProgress.class.getDeclaredField("a");
+            Field criteriaF = AdvancementProgress.class.getDeclaredField("e");
             criteriaF.setAccessible(true);
             Map<String, CriterionProgress> criteria = (Map<String, CriterionProgress>) criteriaF.get(handle);
             return criteria.entrySet()
