@@ -144,7 +144,7 @@ subprojects {
         compileOnly("org.jetbrains.kotlin:kotlin-stdlib")
 
         testImplementation("org.mockito:mockito-core:5.10.0")
-        testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
         testImplementation("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
     }
 
